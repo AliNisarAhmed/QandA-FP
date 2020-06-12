@@ -11,7 +11,6 @@ module Handler.Home where
 
 import           Import
 import           Data.Aeson
-import GHC.Generics
 
 -- Define our data that will be used for creating the form.
 data FileForm = FileForm

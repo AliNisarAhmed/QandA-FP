@@ -1,3 +1,14 @@
+## Database Setup
+
+After installing Postgres, run:
+
+```
+createuser backend --pwprompt --superuser
+# Enter password backend when prompted
+createdb backend
+createdb backend_test
+```
+
 ## Haskell Setup
 
 1. If you haven't already, [install Stack](https://haskell-lang.org/get-started)
