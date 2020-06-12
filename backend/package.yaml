@@ -43,6 +43,7 @@ dependencies:
 - wai
 - foreign-store
 - wai-cors
+- esqueleto
 
 # The library contains all of our application code. The executable
 # defined below is just a thin wrapper.
