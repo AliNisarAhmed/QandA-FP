@@ -1,6 +1,19 @@
 -- By default this file is used by `persistFileWith` in Model.hs (which is imported by Foundation.hs)
 -- Syntax for this file here: https://github.com/yesodweb/persistent/blob/master/docs/Persistent-entity-syntax.md
 
-Question
-  text Text
-  answer Text
+User
+  name Text
+
+Question json
+  title Text
+  content Text
+  created UTCTime default=now()
+  userId UserId
+  deriving Eq Show
+
+Answer
+  questionId QuestionId
+  content Text
+  userId UserId
+  created UTCTime default=now()
+

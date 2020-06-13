@@ -4,18 +4,19 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
-{-# LANGUAGE ExplicitForAll #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE InstanceSigs #-}
 
 module Foundation where
 
-import Import.NoFoundation
-import Control.Monad.Logger (LogSource)
-import Database.Persist.Sql (ConnectionPool, runSqlPool)
+import           Import.NoFoundation
+import           Control.Monad.Logger           ( LogSource )
+import           Database.Persist.Sql           ( ConnectionPool
+                                                , runSqlPool
+                                                )
 
-import Yesod.Core.Types     (Logger)
-import qualified Yesod.Core.Unsafe as Unsafe
+import           Yesod.Core.Types               ( Logger )
+import qualified Yesod.Core.Unsafe             as Unsafe
 
 -- | The foundation datatype for your application. This can be a good place to
 -- keep settings and values requiring initialization before your application
@@ -52,8 +53,7 @@ mkYesodData "App" $(parseRoutesFile "config/routes")
 
 
 -- | A convenient synonym for database access functions.
-type DB a = forall (m :: * -> *).
-    (MonadUnliftIO m) => ReaderT SqlBackend m a
+type DB a = forall (m :: * -> *) . (MonadUnliftIO m) => ReaderT SqlBackend m a
 
 -- Please see the documentation for the Yesod typeclass. There are a number
 -- of settings which can be configured by overriding methods here.
@@ -61,10 +61,9 @@ instance Yesod App where
     -- Controls the base of generated URLs. For more information on modifying,
     -- see: https://github.com/yesodweb/yesod/wiki/Overriding-approot
     approot :: Approot App
-    approot = ApprootRequest $ \app req ->
-        case appRoot $ appSettings app of
-            Nothing -> getApprootText guessApproot app req
-            Just root -> root
+    approot = ApprootRequest $ \app req -> case appRoot $ appSettings app of
+        Nothing   -> getApprootText guessApproot app req
+        Just root -> root
 
     -- Store session data on the client in encrypted cookies,
     -- default session idle timeout is 120 minutes
@@ -99,10 +98,12 @@ instance Yesod App where
     -- in development, and warnings and errors in production.
     shouldLogIO :: App -> LogSource -> LogLevel -> IO Bool
     shouldLogIO app _source level =
-        return $
-        appShouldLogAll (appSettings app)
-            || level == LevelWarn
-            || level == LevelError
+        return
+            $  appShouldLogAll (appSettings app)
+            || level
+            == LevelWarn
+            || level
+            == LevelError
 
     makeLogger :: App -> IO Logger
     makeLogger = return . appLogger
