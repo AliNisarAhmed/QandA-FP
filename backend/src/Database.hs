@@ -16,18 +16,24 @@ import           Database.Esqueleto             ( select
 import           Model
 import           Data.Aeson                     ( )
 import           Import
+import           Requests
 
 
 
 ---- Queries ----
 
 
+
 getQuestions :: Handler [Entity Question]
 getQuestions = runDB $ select $ from $ \question -> return question
 
 
-createQuestion :: Question -> Handler (Maybe Question)
-createQuestion q = do
-  question <- runDB $ insert q
+createQuestion :: CreateQuestionRequest -> Handler (Maybe Question)
+createQuestion cqR = do
+  now      <- liftIO getCurrentTime
+  question <- runDB
+    $ insert (Question (title cqR) (content cqR) now (userId cqR))
   runDB $ get question
 
+checkUser :: Key User -> Handler (Maybe (Entity User))
+checkUser userId = runDB $ selectFirst [UserId ==. userId] []
