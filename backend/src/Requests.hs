@@ -18,6 +18,12 @@ data CreateQuestionRequest = CreateQuestionRequest
     } deriving (Generic, ToJSON, FromJSON)
 
 
+data UpdateQuestionRequest = UpdateQuestionRequest
+    { updateQuestionId :: Key Question
+    , updatedTitle :: Maybe Text
+    , updatedContent :: Maybe Text
+    } deriving (Generic, ToJSON, FromJSON)
+
 ---
 
 

@@ -3,4 +3,4 @@
 
 /static StaticR Static appStatic
 
-/api/questions QuestionR GET POST
+/api/questions QuestionR GET POST PUT

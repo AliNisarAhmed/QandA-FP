@@ -28,3 +28,15 @@ postQuestionR = do
                 Just q  -> return $ toJSON q
                 Nothing -> badRequest "failed to create the user"
         Nothing -> badRequest "User does not exist"
+
+
+putQuestionR :: Handler Value
+putQuestionR = do
+    body          <- requireCheckJsonBody :: Handler UpdateQuestionRequest
+    maybeQuestion <- checkQuestion (updateQuestionId body)
+    case maybeQuestion of
+        Nothing -> badRequest "Question does not exist"
+        Just q  -> case (updatedTitle body, updatedContent body) of
+            (Nothing, Nothing) -> badRequest "At least one update is required"
+            (newTitle, newContent) ->
+                fmap toJSON (updateQuestion (entityKey q) newTitle newContent)
