@@ -5,3 +5,5 @@
 
 /api/questions QuestionR GET POST
 /api/questions/#QuestionId QuestionUpdateR PUT DELETE
+
+/api/questions/#QuestionId/answers AnswerR GET POST

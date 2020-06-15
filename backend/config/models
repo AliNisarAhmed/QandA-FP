@@ -11,7 +11,7 @@ Question json
   userId UserId
   deriving Eq Show
 
-Answer
+Answer json
   questionId QuestionId
   content Text
   userId UserId

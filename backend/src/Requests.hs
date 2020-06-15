@@ -23,6 +23,11 @@ data UpdateQuestionRequest = UpdateQuestionRequest
     , updatedContent :: Maybe Text
     } deriving (Generic, ToJSON, FromJSON)
 
+
+data CreateAnswerRequest = CreateAnswerRequest
+    { content :: Text
+    } deriving (Generic, ToJSON, FromJSON)
+
 ---
 
 

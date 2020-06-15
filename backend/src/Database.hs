@@ -59,8 +59,21 @@ updateQuestion k Nothing (Just content) =
   runDB $ updateGet k [QuestionContent =. content]
 
 deleteQuestion :: Key Question -> Handler ()
-deleteQuestion = runDB . delete
+deleteQuestion questionId = runDB $
+  insert (Answer (questionId) ())
 
+
+
+---- ANSWERS ----
+
+getAnswersForQuestion :: Key Question -> Handler [Entity Answer]
+getAnswersForQuestion questionId = runDB $ getAllAnswers questionId
+
+createAnswer :: Key Question -> CreateAnswerRequest -> Handler (Entity Answer)
+createAnswer questionId request = do
+  now <- liftIO getCurrentTime
+  answer <- runDB $
+    insert (Answer (val questionId) (content request))
 
 ---  DB Queries  ----
 
@@ -81,3 +94,8 @@ getQuestionById :: Key Question -> DbQuery [Entity Question]
 getQuestionById questionId = select $ from $ \q -> do
   where_ (q ^. QuestionId ==. val questionId)
   return q
+
+getAllAnswers :: Key Question -> DbQuery [Entity Answer]
+getAllAnswers questionId = select $ from $ \answer -> do
+  where_ (answer ^. AnswerQuestionId ==. val questionId)
+  return answer
