@@ -16,7 +16,6 @@ getQuestionR :: Handler Value
 getQuestionR = toJSON <$> getQuestions
 
 
-
 postQuestionR :: Handler Value
 postQuestionR = do
     body      <- requireCheckJsonBody :: Handler CreateQuestionRequest
@@ -30,13 +29,22 @@ postQuestionR = do
         Nothing -> badRequest "User does not exist"
 
 
-putQuestionR :: Handler Value
-putQuestionR = do
+putQuestionUpdateR :: QuestionId -> Handler Value
+putQuestionUpdateR questionId = do
     body          <- requireCheckJsonBody :: Handler UpdateQuestionRequest
-    maybeQuestion <- checkQuestion (updateQuestionId body)
+    maybeQuestion <- checkQuestion questionId
     case maybeQuestion of
         Nothing -> badRequest "Question does not exist"
         Just q  -> case (updatedTitle body, updatedContent body) of
             (Nothing, Nothing) -> badRequest "At least one update is required"
             (newTitle, newContent) ->
                 fmap toJSON (updateQuestion (entityKey q) newTitle newContent)
+
+deleteQuestionUpdateR :: QuestionId -> Handler Value
+deleteQuestionUpdateR questionId = do
+    maybeQuestion <- checkQuestion questionId
+    case maybeQuestion of
+        Nothing -> badRequest "Question does not exist"
+        Just q  -> do
+            deleteQuestion questionId
+            return $ object ["success" .= True]

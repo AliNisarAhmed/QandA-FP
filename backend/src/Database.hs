@@ -11,7 +11,9 @@ import           ClassyPrelude.Yesod     hiding ( Value
                                                 , (==.)
                                                 , update
                                                 )
-import           Database.Esqueleto      hiding ( (=.) )
+import           Database.Esqueleto      hiding ( (=.)
+                                                , delete
+                                                )
 import           Model
 import           Data.Aeson                     ( )
 import           Requests
@@ -55,6 +57,9 @@ updateQuestion k (Just title) Nothing =
   runDB $ updateGet k [QuestionTitle =. title]
 updateQuestion k Nothing (Just content) =
   runDB $ updateGet k [QuestionContent =. content]
+
+deleteQuestion :: Key Question -> Handler ()
+deleteQuestion = runDB . delete
 
 
 ---  DB Queries  ----
