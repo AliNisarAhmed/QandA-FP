@@ -25,7 +25,8 @@ data UpdateQuestionRequest = UpdateQuestionRequest
 
 
 data CreateAnswerRequest = CreateAnswerRequest
-    { content :: Text
+    { newContent :: Text
+    , creatorId :: Key User
     } deriving (Generic, ToJSON, FromJSON)
 
 ---

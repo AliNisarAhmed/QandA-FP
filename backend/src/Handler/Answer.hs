@@ -20,7 +20,7 @@ getAnswerR questionId = do
 postAnswerR :: QuestionId -> Handler Value
 postAnswerR questionId = do
   maybeQuestion <- checkQuestion questionId
-  body <- requireCheckJsonBody :: Handler CreateAnswerRequest
+  body          <- requireCheckJsonBody :: Handler CreateAnswerRequest
   case maybeQuestion of
     Nothing -> badRequest "Question does not exist"
-    Just q -> fmap toJSON (createAnswer questionId body)
+    Just q  -> fmap toJSON (createAnswer questionId body)

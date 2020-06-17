@@ -10,10 +10,11 @@ import           ClassyPrelude.Yesod     hiding ( Value
                                                 , on
                                                 , (==.)
                                                 , update
-                                                )
-import           Database.Esqueleto      hiding ( (=.)
                                                 , delete
+                                                , insert
+                                                , get
                                                 )
+import           Database.Esqueleto      hiding ( (=.) )
 import           Model
 import           Data.Aeson                     ( )
 import           Requests
@@ -23,16 +24,24 @@ import           Foundation
 
 ---
 
+
+
 -- https://stackoverflow.com/questions/35676855/represent-foreign-key-relationship-in-json-using-servant-and-persistent
+
+
 
 
 --- General type synonym to describe DB Queries
 
 
 
+
+
 type DbQuery a = ReaderT SqlBackend Handler a
 
 ---- Queries ----
+
+
 
 getQuestions :: Handler [Entity Question]
 getQuestions = runDB $ getAllQuestions
@@ -59,12 +68,14 @@ updateQuestion k Nothing (Just content) =
   runDB $ updateGet k [QuestionContent =. content]
 
 deleteQuestion :: Key Question -> Handler ()
-deleteQuestion questionId = runDB $
-  insert (Answer (questionId) ())
+deleteQuestion questionId =
+  runDB $ delete $ from $ \p -> where_ (p ^. QuestionId ==. val questionId)
 
 
 
 ---- ANSWERS ----
+
+
 
 getAnswersForQuestion :: Key Question -> Handler [Entity Answer]
 getAnswersForQuestion questionId = runDB $ getAllAnswers questionId
@@ -72,10 +83,13 @@ getAnswersForQuestion questionId = runDB $ getAllAnswers questionId
 createAnswer :: Key Question -> CreateAnswerRequest -> Handler (Entity Answer)
 createAnswer questionId request = do
   now <- liftIO getCurrentTime
-  answer <- runDB $
-    insert (Answer (val questionId) (content request))
+  runDB $ insertEntity
+    (Answer questionId (newContent request) (creatorId request) now)
+
 
 ---  DB Queries  ----
+
+
 
 getAllQuestions :: DbQuery [Entity Question]
 getAllQuestions = select $ from $ \question -> return question
