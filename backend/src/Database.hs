@@ -14,7 +14,9 @@ import           ClassyPrelude.Yesod     hiding ( Value
                                                 , insert
                                                 , get
                                                 )
-import           Database.Esqueleto      hiding ( (=.) )
+import           Database.Esqueleto      hiding ( (=.)
+                                                , deleteWhere
+                                                )
 import           Model
 import           Data.Aeson                     ( )
 import           Requests
@@ -23,8 +25,6 @@ import           Foundation
 
 
 ---
-
-
 
 
 -- https://stackoverflow.com/questions/35676855/represent-foreign-key-relationship-in-json-using-servant-and-persistent
@@ -98,7 +98,8 @@ updateAnswer answerId updatedContent =
   runDB $ updateGet answerId [AnswerContent =. updatedContent]
 
 
-
+deleteAnswer :: Key Answer -> Key User -> Handler ()
+deleteAnswer answerId userId = runDB $ deleteAnswerById answerId userId
 
 ---  DB Queries  ----
 
@@ -139,3 +140,9 @@ selectAnswerById questionId answerId = select $ from $ \ans -> do
     ==. val questionId
     )
   return ans
+
+deleteAnswerById :: Key Answer -> Key User -> DbQuery ()
+deleteAnswerById answerId userId = delete $ from $ \ans -> where_
+  (ans ^. AnswerId ==. val answerId &&. ans ^. AnswerUserId ==. val userId)
+
+  -- deleteWhere [AnswerId ==. answerId, AnswerUserId ==. userId]

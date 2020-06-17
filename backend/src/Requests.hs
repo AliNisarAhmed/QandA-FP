@@ -33,6 +33,10 @@ data UpdateAnswerRequest = UpdateAnswerRequest
     { updatedAnswerContent :: Text
     } deriving (Generic, ToJSON, FromJSON)
 
+data DeleteAnswerRequest = DeleteAnswerRequest
+    { deletorsId :: Key User
+    } deriving (Generic, ToJSON, FromJSON)
+
 ---
 
 
