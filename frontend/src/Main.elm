@@ -1,11 +1,25 @@
 module Main exposing (..)
 
 import Browser
-import Element as E exposing (Element)
-import Html exposing (Html, div, h1, img, text)
+import Element as E exposing (Attribute, Element)
+import Element.Background as Background
+import Element.Border as Border
+import Element.Font as Font
+import Element.Input as Input
+import Html exposing (Html)
 import Html.Attributes exposing (src)
 import Http
-import Json.Decode exposing (Decoder, field, list, map2, string)
+import Json.Decode exposing (Decoder, field, int, list, map4, string)
+
+
+serverUrl : String
+serverUrl =
+    "http://localhost:5000/api"
+
+
+explain : Attribute Msg
+explain =
+    E.explain Debug.todo
 
 
 
@@ -14,9 +28,11 @@ import Json.Decode exposing (Decoder, field, list, map2, string)
 
 questionDecoder : Decoder Question
 questionDecoder =
-    map2 Question
-        (field "questionText" string)
-        (field "questionAnswer" string)
+    map4 Question
+        (field "title" string)
+        (field "content" string)
+        (field "created" string)
+        (field "userId" int)
 
 
 questionListDecoder : Decoder (List Question)
@@ -24,18 +40,15 @@ questionListDecoder =
     list questionDecoder
 
 
-responseDecoder : Decoder (List Question)
-responseDecoder =
-    field "questions" questionListDecoder
-
-
 
 ---- MODEL ----
 
 
 type alias Question =
-    { questionText : String
-    , questionAnswer : String
+    { title : String
+    , content : String
+    , created : String
+    , userId : Int
     }
 
 
@@ -48,17 +61,23 @@ type Status
 type alias Model =
     { questions : List Question
     , status : Status
+    , search : String
     }
+
+
+initModel : Model
+initModel =
+    { questions = [], status = Loading, search = "" }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { questions = [], status = Loading }, getData )
+    ( initModel, getData )
 
 
 getData : Cmd Msg
 getData =
-    Http.get { url = "http://localhost:5000", expect = Http.expectJson GotQuestions responseDecoder }
+    Http.get { url = serverUrl ++ "/questions", expect = Http.expectJson GotQuestions questionListDecoder }
 
 
 
@@ -67,6 +86,7 @@ getData =
 
 type Msg
     = GotQuestions (Result Http.Error (List Question))
+    | OnSearchChange String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -77,6 +97,11 @@ update msg model =
 
         GotQuestions (Ok res) ->
             ( { model | questions = res, status = Loaded }, Cmd.none )
+
+        OnSearchChange val ->
+            ( { model | search = val }
+            , Cmd.none
+            )
 
 
 
@@ -90,20 +115,48 @@ view model =
             E.layout [] <| E.text "Loading..."
 
         Loaded ->
-            E.layout [] (displayQuestionsList model.questions)
+            E.layout [] <| page model
 
         Error error ->
-            E.layout [] <| E.text "Error ..."
+            E.layout [] <| E.text "Error"
 
 
-displayQuestionsList : List Question -> Element Msg
-displayQuestionsList qs =
-    E.el [] (E.row [] <| List.map displayQuestion qs)
+page : Model -> Element Msg
+page model =
+    E.column [ E.width E.fill ] <|
+        [ navbar model
+        ]
+            ++ List.map displayQuestion model.questions
+
+
+navbar : Model -> Element Msg
+navbar model =
+    E.row
+        [ E.spaceEvenly
+        , E.width E.fill
+        , E.paddingXY 10 10
+        , Border.shadow
+            { offset = ( 1.0, 1.0 )
+            , size = 2.0
+            , blur = 2.0
+            , color = E.rgba 0 0 0 0.8
+            }
+        ]
+        [ E.el [ Font.bold, Font.size 20 ] <| E.text "Q & A"
+        , E.el [ E.centerX ] <|
+            Input.search [ E.width <| E.px 300 ]
+                { onChange = OnSearchChange
+                , text = model.search
+                , placeholder = Just <| Input.placeholder [] <| E.text "Search"
+                , label = Input.labelHidden "Search"
+                }
+        , E.el [] <| E.text "Sign In"
+        ]
 
 
 displayQuestion : Question -> Element Msg
 displayQuestion q =
-    E.el [] <| E.column [] [ E.row [] [ E.text q.questionText ], E.row [] [ E.text q.questionAnswer ] ]
+    E.el [] <| E.column [] [ E.row [] [ E.text q.title ], E.row [] [ E.text q.content ] ]
 
 
 
