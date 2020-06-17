@@ -12,15 +12,18 @@ import           Requests
 
 getAnswerR :: QuestionId -> Handler Value
 getAnswerR questionId = do
-  maybeQuestion <- checkQuestion questionId
-  case maybeQuestion of
-    Nothing -> badRequest "Question does not exist"
-    Just q  -> fmap toJSON (getAnswersForQuestion questionId)
+  _ <- return $ checkQuestion questionId
+  fmap toJSON (getAnswersForQuestion questionId)
 
 postAnswerR :: QuestionId -> Handler Value
 postAnswerR questionId = do
-  maybeQuestion <- checkQuestion questionId
-  body          <- requireCheckJsonBody :: Handler CreateAnswerRequest
-  case maybeQuestion of
-    Nothing -> badRequest "Question does not exist"
-    Just q  -> fmap toJSON (createAnswer questionId body)
+  _    <- return $ checkQuestion questionId
+  body <- requireCheckJsonBody :: Handler CreateAnswerRequest
+  fmap toJSON (createAnswer questionId body)
+
+putAnswerUpdateR :: QuestionId -> AnswerId -> Handler Value
+putAnswerUpdateR questionId answerId = do
+  body <- requireCheckJsonBody :: Handler UpdateAnswerRequest
+  _    <- return $ checkQuestion questionId
+  _    <- return $ checkAnswer questionId answerId
+  fmap toJSON $ updateAnswer answerId (updatedAnswerContent body)

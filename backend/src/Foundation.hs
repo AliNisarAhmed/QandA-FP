@@ -112,7 +112,7 @@ instance Yesod App where
 -- How to run database actions.
 instance YesodPersist App where
     type YesodPersistBackend App = SqlBackend
-    runDB :: SqlPersistT Handler a -> Handler a
+    -- runDB :: SqlPersistT Handler a -> Handler a
     runDB action = do
         master <- getYesod
         runSqlPool action $ appConnPool master

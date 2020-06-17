@@ -26,15 +26,14 @@ import           Foundation
 
 
 
+
 -- https://stackoverflow.com/questions/35676855/represent-foreign-key-relationship-in-json-using-servant-and-persistent
 
 
 
 
+
 --- General type synonym to describe DB Queries
-
-
-
 
 
 type DbQuery a = ReaderT SqlBackend Handler a
@@ -43,8 +42,9 @@ type DbQuery a = ReaderT SqlBackend Handler a
 
 
 
+
 getQuestions :: Handler [Entity Question]
-getQuestions = runDB $ getAllQuestions
+getQuestions = runDB getAllQuestions
 
 
 createQuestion :: CreateQuestionRequest -> Handler (Maybe Question)
@@ -58,8 +58,8 @@ checkUser :: Key User -> Handler (Maybe (Entity User))
 checkUser = fmap listToMaybe . runDB . selectUserById
 
 
-checkQuestion :: Key Question -> Handler (Maybe (Entity Question))
-checkQuestion = fmap listToMaybe . runDB . getQuestionById
+checkQuestion :: Key Question -> DbQuery Question
+checkQuestion = get404
 
 updateQuestion :: Key Question -> Maybe Text -> Maybe Text -> Handler Question
 updateQuestion k (Just title) Nothing =
@@ -77,6 +77,7 @@ deleteQuestion questionId =
 
 
 
+
 getAnswersForQuestion :: Key Question -> Handler [Entity Answer]
 getAnswersForQuestion questionId = runDB $ getAllAnswers questionId
 
@@ -87,7 +88,20 @@ createAnswer questionId request = do
     (Answer questionId (newContent request) (creatorId request) now)
 
 
+checkAnswer :: Key Question -> Key Answer -> Handler (Maybe (Entity Answer))
+checkAnswer questionId answerId =
+  fmap listToMaybe . runDB $ selectAnswerById questionId answerId
+
+
+updateAnswer :: Key Answer -> Text -> Handler Answer
+updateAnswer answerId updatedContent =
+  runDB $ updateGet answerId [AnswerContent =. updatedContent]
+
+
+
+
 ---  DB Queries  ----
+
 
 
 
@@ -113,3 +127,15 @@ getAllAnswers :: Key Question -> DbQuery [Entity Answer]
 getAllAnswers questionId = select $ from $ \answer -> do
   where_ (answer ^. AnswerQuestionId ==. val questionId)
   return answer
+
+selectAnswerById :: Key Question -> Key Answer -> DbQuery [Entity Answer]
+selectAnswerById questionId answerId = select $ from $ \ans -> do
+  where_
+    (   ans
+    ^.  AnswerId
+    ==. val answerId
+    &&. ans
+    ^.  AnswerQuestionId
+    ==. val questionId
+    )
+  return ans

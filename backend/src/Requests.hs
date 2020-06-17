@@ -29,6 +29,10 @@ data CreateAnswerRequest = CreateAnswerRequest
     , creatorId :: Key User
     } deriving (Generic, ToJSON, FromJSON)
 
+data UpdateAnswerRequest = UpdateAnswerRequest
+    { updatedAnswerContent :: Text
+    } deriving (Generic, ToJSON, FromJSON)
+
 ---
 
 
