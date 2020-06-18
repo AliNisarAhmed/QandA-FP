@@ -1,16 +1,16 @@
 module Main exposing (..)
 
-import Browser
+import Browser exposing (Document, UrlRequest)
+import Browser.Navigation as Nav
 import Colors
 import Element as E exposing (Attribute, Element)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
-import Html exposing (Html)
-import Html.Attributes exposing (src)
 import Http
 import Json.Decode exposing (Decoder, field, int, list, map4, string)
+import Url
 
 
 serverUrl : String
@@ -60,20 +60,22 @@ type Status
 
 
 type alias Model =
-    { questions : List Question
+    { url : Url.Url
+    , key : Nav.Key
+    , questions : List Question
     , status : Status
     , search : String
     }
 
 
-initModel : Model
-initModel =
-    { questions = [], status = Loading, search = "" }
+initModel : Url.Url -> Nav.Key -> Model
+initModel url key =
+    { url = url, key = key, questions = [], status = Loading, search = "" }
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( initModel, getData )
+init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
+init flags url key =
+    ( initModel url key, getData )
 
 
 getData : Cmd Msg
@@ -86,13 +88,22 @@ getData =
 
 
 type Msg
-    = GotQuestions (Result Http.Error (List Question))
+    = LinkClicked UrlRequest
+    | UrlChanged Url.Url
+    | GotQuestions (Result Http.Error (List Question))
     | OnSearchChange String
+    | GoToAskAQuestionPage
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        LinkClicked urlRequest ->
+            ( model, Cmd.none )
+
+        UrlChanged url ->
+            ( model, Cmd.none )
+
         GotQuestions (Err error) ->
             ( model, Cmd.none )
 
@@ -104,22 +115,28 @@ update msg model =
             , Cmd.none
             )
 
+        GoToAskAQuestionPage ->
+            ( model, Nav.pushUrl model.key "/ask" )
+
 
 
 ---- VIEW ----
 
 
-view : Model -> Html Msg
+view : Model -> Document Msg
 view model =
-    case model.status of
-        Loading ->
-            E.layout [] <| E.text "Loading..."
+    { title = "Q & A"
+    , body =
+        case model.status of
+            Loading ->
+                [ E.layout [] <| E.text "Loading..." ]
 
-        Loaded ->
-            E.layout [] <| page model
+            Loaded ->
+                [ E.layout [] <| page model ]
 
-        Error error ->
-            E.layout [] <| E.text "Error"
+            Error error ->
+                [ E.layout [] <| E.text "Error" ]
+    }
 
 
 page : Model -> Element Msg
@@ -138,7 +155,7 @@ page model =
                     , E.focused [ Background.color Colors.primaryDark ]
                     , E.mouseOver [ Background.color Colors.primaryDark ]
                     ]
-                    { onPress = Nothing, label = E.text "Ask a question" }
+                    { onPress = Just GoToAskAQuestionPage, label = E.text "Ask a question" }
                 ]
             ]
                 ++ List.map displayQuestion model.questions
@@ -188,14 +205,25 @@ displayQuestion q =
 
 
 
+---- SUBSCRIPTIONS ----
+
+
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    Sub.none
+
+
+
 ---- PROGRAM ----
 
 
 main : Program () Model Msg
 main =
-    Browser.element
-        { view = view
-        , init = \_ -> init
+    Browser.application
+        { init = init
+        , view = view
         , update = update
-        , subscriptions = always Sub.none
+        , subscriptions = subscriptions
+        , onUrlChange = UrlChanged
+        , onUrlRequest = LinkClicked
         }
