@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 import Browser
+import Colors
 import Element as E exposing (Attribute, Element)
 import Element.Background as Background
 import Element.Border as Border
@@ -125,8 +126,23 @@ page : Model -> Element Msg
 page model =
     E.column [ E.width E.fill ] <|
         [ navbar model
+        , E.column [ E.centerX, E.paddingXY 0 20 ] <|
+            [ E.row [ E.width E.fill ]
+                [ E.el [ Font.bold ] <| E.text "Unanswered Questions"
+                , Input.button
+                    [ E.alignRight
+                    , Background.color Colors.primary
+                    , Font.color Colors.white
+                    , E.paddingXY 20 10
+                    , Border.rounded 5
+                    , E.focused [ Background.color Colors.primaryDark ]
+                    , E.mouseOver [ Background.color Colors.primaryDark ]
+                    ]
+                    { onPress = Nothing, label = E.text "Ask a question" }
+                ]
+            ]
+                ++ List.map displayQuestion model.questions
         ]
-            ++ List.map displayQuestion model.questions
 
 
 navbar : Model -> Element Msg
@@ -139,7 +155,7 @@ navbar model =
             { offset = ( 1.0, 1.0 )
             , size = 2.0
             , blur = 2.0
-            , color = E.rgba 0 0 0 0.8
+            , color = Colors.gray
             }
         ]
         [ E.el [ Font.bold, Font.size 20 ] <| E.text "Q & A"
@@ -156,7 +172,19 @@ navbar model =
 
 displayQuestion : Question -> Element Msg
 displayQuestion q =
-    E.el [] <| E.column [] [ E.row [] [ E.text q.title ], E.row [] [ E.text q.content ] ]
+    E.el
+        [ Border.widthEach { bottom = 1, top = 0, right = 0, left = 0 }
+        , Border.color Colors.gray
+        , E.paddingXY 0 20
+        ]
+    <|
+        E.column [ E.width <| E.px 700 ]
+            [ E.el [ Font.bold ] <| E.text q.title
+            , E.row [ E.alignLeft ]
+                [ E.paragraph [ E.alignLeft ] <|
+                    [ E.text <| (String.left 50 q.content ++ "...") ]
+                ]
+            ]
 
 
 
