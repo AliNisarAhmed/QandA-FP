@@ -8,14 +8,9 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
-import Http
-import Json.Decode exposing (Decoder, field, int, list, map4, string)
+import Page.Home as Home exposing (Msg(..))
+import Route exposing (Route(..))
 import Url
-
-
-serverUrl : String
-serverUrl =
-    "http://localhost:5000/api"
 
 
 explain : Attribute Msg
@@ -24,99 +19,98 @@ explain =
 
 
 
----
+---- PAGES ----
 
 
-questionDecoder : Decoder Question
-questionDecoder =
-    map4 Question
-        (field "title" string)
-        (field "content" string)
-        (field "created" string)
-        (field "userId" int)
+type Page
+    = LandingPage
+    | HomePage Home.Model
+    | NotFoundPage
 
 
-questionListDecoder : Decoder (List Question)
-questionListDecoder =
-    list questionDecoder
+type Msg
+    = HomePageMsg Home.Msg
+    | LinkClicked UrlRequest
+    | UrlChanged Url.Url
+    | OnSearchChange String
 
 
 
 ---- MODEL ----
 
 
-type alias Question =
-    { title : String
-    , content : String
-    , created : String
-    , userId : Int
-    }
-
-
-type Status
-    = Loading
-    | Loaded
-    | Error String
-
-
 type alias Model =
-    { url : Url.Url
-    , key : Nav.Key
-    , questions : List Question
-    , status : Status
+    { key : Nav.Key
     , search : String
+    , route : Route
+    , currentPage : Page
     }
-
-
-initModel : Url.Url -> Nav.Key -> Model
-initModel url key =
-    { url = url, key = key, questions = [], status = Loading, search = "" }
 
 
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
-    ( initModel url key, getData )
+    let
+        model =
+            { key = key
+            , route = Route.parseUrl url
+            , search = ""
+            , currentPage = LandingPage
+            }
+    in
+    initCurrentPage ( model, Cmd.none )
 
 
-getData : Cmd Msg
-getData =
-    Http.get { url = serverUrl ++ "/questions", expect = Http.expectJson GotQuestions questionListDecoder }
+initCurrentPage : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+initCurrentPage ( model, currentCommands ) =
+    let
+        ( currentPage, mappedCmds ) =
+            case model.route of
+                Route.HomePageRoute ->
+                    let
+                        ( pageModel, pageCmds ) =
+                            Home.init model.key
+                    in
+                    ( HomePage pageModel, Cmd.map HomePageMsg pageCmds )
+
+                Route.NotFoundRoute ->
+                    ( NotFoundPage, Cmd.none )
+    in
+    ( { model | currentPage = currentPage }
+    , Cmd.batch [ currentCommands, mappedCmds ]
+    )
 
 
 
 ---- UPDATE ----
 
 
-type Msg
-    = LinkClicked UrlRequest
-    | UrlChanged Url.Url
-    | GotQuestions (Result Http.Error (List Question))
-    | OnSearchChange String
-    | GoToAskAQuestionPage
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case msg of
-        LinkClicked urlRequest ->
+    case ( msg, model.currentPage ) of
+        ( LinkClicked urlRequest, _ ) ->
             ( model, Cmd.none )
 
-        UrlChanged url ->
-            ( model, Cmd.none )
+        ( UrlChanged url, _ ) ->
+            let
+                newRoute =
+                    Route.parseUrl url
+            in
+            ( { model | route = newRoute }, Cmd.none ) |> initCurrentPage
 
-        GotQuestions (Err error) ->
-            ( model, Cmd.none )
+        ( OnSearchChange searchTerm, _ ) ->
+            ( { model | search = searchTerm }, Cmd.none )
 
-        GotQuestions (Ok res) ->
-            ( { model | questions = res, status = Loaded }, Cmd.none )
-
-        OnSearchChange val ->
-            ( { model | search = val }
-            , Cmd.none
+        ( HomePageMsg pageMsg, HomePage pageModel ) ->
+            let
+                ( updatedModel, updatedCmds ) =
+                    Home.update pageMsg pageModel
+            in
+            ( { model | currentPage = HomePage updatedModel }
+            , Cmd.map HomePageMsg updatedCmds
             )
 
-        GoToAskAQuestionPage ->
-            ( model, Nav.pushUrl model.key "/ask" )
+        ( _, _ ) ->
+            ( model, Cmd.none )
 
 
 
@@ -125,41 +119,27 @@ update msg model =
 
 view : Model -> Document Msg
 view model =
-    { title = "Q & A"
+    let
+        ( title, currentView ) =
+            case model.currentPage of
+                HomePage pageModel ->
+                    ( "Q & A", Home.view pageModel |> E.map HomePageMsg )
+
+                LandingPage ->
+                    ( "Q & A", E.text "Loading..." )
+
+                NotFoundPage ->
+                    ( "Not Found", E.text "Not Found..." )
+    in
+    { title = title
     , body =
-        case model.status of
-            Loading ->
-                [ E.layout [] <| E.text "Loading..." ]
-
-            Loaded ->
-                [ E.layout [] <| page model ]
-
-            Error error ->
-                [ E.layout [] <| E.text "Error" ]
-    }
-
-
-page : Model -> Element Msg
-page model =
-    E.column [ E.width E.fill ] <|
-        [ navbar model
-        , E.column [ E.centerX, E.paddingXY 0 20 ] <|
-            [ E.row [ E.width E.fill ]
-                [ E.el [ Font.bold ] <| E.text "Unanswered Questions"
-                , Input.button
-                    [ E.alignRight
-                    , Background.color Colors.primary
-                    , Font.color Colors.white
-                    , E.paddingXY 20 10
-                    , Border.rounded 5
-                    , E.focused [ Background.color Colors.primaryDark ]
-                    , E.mouseOver [ Background.color Colors.primaryDark ]
-                    ]
-                    { onPress = Just GoToAskAQuestionPage, label = E.text "Ask a question" }
+        [ E.layout [] <|
+            E.column [ E.width E.fill ]
+                [ navbar model
+                , currentView
                 ]
-            ]
-                ++ List.map displayQuestion model.questions
         ]
+    }
 
 
 navbar : Model -> Element Msg
@@ -185,23 +165,6 @@ navbar model =
                 }
         , E.el [] <| E.text "Sign In"
         ]
-
-
-displayQuestion : Question -> Element Msg
-displayQuestion q =
-    E.el
-        [ Border.widthEach { bottom = 1, top = 0, right = 0, left = 0 }
-        , Border.color Colors.gray
-        , E.paddingXY 0 20
-        ]
-    <|
-        E.column [ E.width <| E.px 700 ]
-            [ E.el [ Font.bold ] <| E.text q.title
-            , E.row [ E.alignLeft ]
-                [ E.paragraph [ E.alignLeft ] <|
-                    [ E.text <| (String.left 50 q.content ++ "...") ]
-                ]
-            ]
 
 
 
