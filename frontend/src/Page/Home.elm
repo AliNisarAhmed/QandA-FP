@@ -9,6 +9,8 @@ import Element.Font as Font
 import Element.Input as Input
 import Http
 import Json.Decode exposing (Decoder, field, int, list, map4, string)
+import Route
+import Styles exposing (buttonStyles)
 
 
 serverUrl : String
@@ -76,7 +78,7 @@ update msg model =
             ( { model | questions = res, status = Loaded }, Cmd.none )
 
         GoToAskAQuestionPage ->
-            ( model, Nav.pushUrl model.key "/ask" )
+            ( model, Route.pushUrl Route.AskQuestionRoute model.key )
 
 
 view : Model -> Element Msg
@@ -99,14 +101,10 @@ page model =
             [ E.row [ E.width E.fill ]
                 [ E.el [ Font.bold ] <| E.text "Unanswered Questions"
                 , Input.button
-                    [ E.alignRight
-                    , Background.color Colors.primary
-                    , Font.color Colors.white
-                    , E.paddingXY 20 10
-                    , Border.rounded 5
-                    , E.focused [ Background.color Colors.primaryDark ]
-                    , E.mouseOver [ Background.color Colors.primaryDark ]
-                    ]
+                    (buttonStyles
+                        ++ [ E.alignRight
+                           ]
+                    )
                     { onPress = Just GoToAskAQuestionPage, label = E.text "Ask a question" }
                 ]
             ]

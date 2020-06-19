@@ -4,10 +4,10 @@ import Browser exposing (Document, UrlRequest)
 import Browser.Navigation as Nav
 import Colors
 import Element as E exposing (Attribute, Element)
-import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
-import Element.Input as Input
+import Element.Input as Input exposing (search)
+import Page.AskQuestion as AskQuestion exposing (Msg(..))
 import Page.Home as Home exposing (Msg(..))
 import Route exposing (Route(..))
 import Url
@@ -25,14 +25,16 @@ explain =
 type Page
     = LandingPage
     | HomePage Home.Model
+    | AskQuestionPage AskQuestion.Model
     | NotFoundPage
 
 
 type Msg
-    = HomePageMsg Home.Msg
-    | LinkClicked UrlRequest
+    = LinkClicked UrlRequest
     | UrlChanged Url.Url
     | OnSearchChange String
+    | HomePageMsg Home.Msg
+    | AskQuestionMsg AskQuestion.Msg
 
 
 
@@ -72,6 +74,13 @@ initCurrentPage ( model, currentCommands ) =
                     in
                     ( HomePage pageModel, Cmd.map HomePageMsg pageCmds )
 
+                Route.AskQuestionRoute ->
+                    let
+                        ( pageModel, pageCmds ) =
+                            AskQuestion.init model.key
+                    in
+                    ( AskQuestionPage pageModel, Cmd.map AskQuestionMsg pageCmds )
+
                 Route.NotFoundRoute ->
                     ( NotFoundPage, Cmd.none )
     in
@@ -109,6 +118,15 @@ update msg model =
             , Cmd.map HomePageMsg updatedCmds
             )
 
+        ( AskQuestionMsg pageMsg, AskQuestionPage pageModel ) ->
+            let
+                ( updatedModel, updatedCmds ) =
+                    AskQuestion.update pageMsg pageModel
+            in
+            ( { model | currentPage = AskQuestionPage updatedModel }
+            , Cmd.map AskQuestionMsg updatedCmds
+            )
+
         ( _, _ ) ->
             ( model, Cmd.none )
 
@@ -122,14 +140,17 @@ view model =
     let
         ( title, currentView ) =
             case model.currentPage of
-                HomePage pageModel ->
-                    ( "Q & A", Home.view pageModel |> E.map HomePageMsg )
-
                 LandingPage ->
                     ( "Q & A", E.text "Loading..." )
 
                 NotFoundPage ->
                     ( "Not Found", E.text "Not Found..." )
+
+                HomePage pageModel ->
+                    ( "Q & A", Home.view pageModel |> E.map HomePageMsg )
+
+                AskQuestionPage pageModel ->
+                    ( "Ask Question", AskQuestion.view pageModel |> E.map AskQuestionMsg )
     in
     { title = title
     , body =
@@ -154,17 +175,28 @@ navbar model =
             , blur = 2.0
             , color = Colors.gray
             }
+        , E.height <| E.px 70
         ]
-        [ E.el [ Font.bold, Font.size 20 ] <| E.text "Q & A"
-        , E.el [ E.centerX ] <|
-            Input.search [ E.width <| E.px 300 ]
-                { onChange = OnSearchChange
-                , text = model.search
-                , placeholder = Just <| Input.placeholder [] <| E.text "Search"
-                , label = Input.labelHidden "Search"
-                }
+        [ E.link [] { url = "/", label = E.el [ Font.bold, Font.size 20 ] <| E.text "Q & A" }
+        , searchBar model
         , E.el [] <| E.text "Sign In"
         ]
+
+
+searchBar : Model -> Element Msg
+searchBar model =
+    case model.currentPage of
+        HomePage _ ->
+            E.el [ E.centerX ] <|
+                Input.search [ E.width <| E.px 300 ]
+                    { onChange = OnSearchChange
+                    , text = model.search
+                    , placeholder = Just <| Input.placeholder [] <| E.text "Search"
+                    , label = Input.labelHidden "Search"
+                    }
+
+        _ ->
+            E.none
 
 
 
