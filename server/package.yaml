@@ -37,6 +37,7 @@ dependencies:
 - time
 - monad-logger
 - bytestring
+- esqueleto
 
 library:
   source-dirs: src

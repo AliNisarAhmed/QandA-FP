@@ -6,6 +6,7 @@ module Database
   ( connectDb
   , runDb
   , migrateDb
+  , DbQuery
   )
 where
 
@@ -18,6 +19,7 @@ import           Database.Persist.Sql           ( SqlPersistT
 
 import           Database.Persist.Postgresql    ( ConnectionString
                                                 , createPostgresqlPool
+                                                , SqlBackend
                                                 )
 import           Control.Monad.Reader           ( ReaderT
                                                 , MonadReader
@@ -42,3 +44,5 @@ runDb query = do
 
 migrateDb :: ConnectionPool -> IO ()
 migrateDb pool = runSqlPool (runMigration migrateAll) pool
+
+type DbQuery a = ReaderT SqlBackend IO a

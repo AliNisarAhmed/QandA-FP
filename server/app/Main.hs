@@ -2,7 +2,7 @@
 
 module Main where
 
-import           Lib (app)
+import           Lib                            ( app )
 import           Network.Wai.Handler.Warp
 import           Config                         ( Config(..) )
 import           Database                       ( connectDb
@@ -18,6 +18,6 @@ main = do
       pool <- connectDb connectionString
       migrateDb pool
       let cfg  = Config pool
-      let port = 8080
+      let port = 5000
       run port $ app cfg
       putStrLn $ "Server started on port: " ++ show port

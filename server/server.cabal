@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5a51c95ba34b949266450a3f26b12897cfe0cdf7cff7891365af3e5e74c25344
+-- hash: 8cc9f3dc7a8b27d000dd67460214843761b5b2d48202630a3c445522609b994b
 
 name:           server
 version:        0.1.0.0
@@ -40,6 +40,7 @@ library
       aeson
     , base >=4.7 && <5
     , bytestring
+    , esqueleto
     , monad-logger
     , mtl
     , persistent
@@ -68,6 +69,7 @@ executable server-exe
       aeson
     , base
     , bytestring
+    , esqueleto
     , monad-logger
     , mtl
     , persistent
@@ -98,6 +100,7 @@ test-suite server-test
       aeson
     , base
     , bytestring
+    , esqueleto
     , hspec
     , hspec-wai
     , hspec-wai-json

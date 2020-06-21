@@ -7,14 +7,34 @@ module API.QuestionAPI (questionServer, QuestionApi) where
 import Model
 import Servant
 import Config (App(..))
-import Database.Persist (Entity(..), selectList)
-import Database (runDb)
+import Database.Persist (Entity(..), selectList, insertEntity)
+import Database (runDb, DbQuery)
+import Database.Esqueleto (select, from)
 
 type QuestionApi =
-  "api" :> "whoami" :> Get '[JSON] [Entity Question]
+    "api" :> "questions" :>
+      (
+        Get '[JSON] [Entity Question] :<|>
+        ReqBody '[JSON] Question :> Post '[JSON] (Entity Question)
+      )
 
 questionServer :: ServerT QuestionApi App
-questionServer = whoami
+questionServer = getAllQuestions :<|> postQuestion
 
-whoami :: App [Entity Question]
-whoami = runDb $ selectList [] []
+getAllQuestions :: App [Entity Question]
+getAllQuestions = runDb getQuestions
+
+
+postQuestion :: Question -> App (Entity Question)
+postQuestion q = runDb $ insertEntity q
+
+
+
+
+
+
+
+
+getQuestions :: DbQuery [Entity Question]
+getQuestions =
+  select $ from $ \q -> return q
