@@ -22,6 +22,7 @@ import           Database.Esqueleto             ( select
                                                 )
 import           Model
 import           Data.Text                      ( Text )
+import           Data.Time                      ( UTCTime )
 
 getQuestions :: DbQuery [Entity Question]
 getQuestions = select $ from $ \q -> return q
@@ -43,3 +44,8 @@ getAnswersByQuestionId questionId = select $ from $ \answer -> do
 
 insertQuestion :: Question -> DbQuery (Entity Question)
 insertQuestion = insertEntity
+
+createAnswer
+  :: Key Question -> Text -> Int -> UTCTime -> DbQuery (Entity Answer)
+createAnswer questionId content userId now =
+  insertEntity (Answer questionId content userId now)

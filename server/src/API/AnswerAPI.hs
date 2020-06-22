@@ -4,6 +4,7 @@
 {-# LANGUAGE DeriveGeneric   #-}
 {-# LANGUAGE OverloadedStrings   #-}
 
+-- https://stackoverflow.com/questions/51146315/servant-queryparams-parse-error
 
 module API.AnswerAPI (answerServer, AnswerApi) where
 
@@ -11,35 +12,44 @@ import GHC.Generics (Generic)
 import Model
 import Servant
 import Config (App(..))
-import Database.Persist (Entity(..))
+import Database.Persist (Entity(..), insertEntity)
 import Database (runDb)
 import Data.Text (Text(..))
 import Data.Time (getCurrentTime)
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (FromJSON, ToJSON)
-import API.DbQueries (getAnswersByQuestionId)
+import API.DbQueries (getAnswersByQuestionId, checkQuestion, createAnswer)
 
 type AnswerApi =
-  "api" :> "questions" :> Capture "questionId" (Key Question) :>
+  "api" :> "questions" :>
     (
-      "answers" :> Get '[JSON] [Entity Answer] :<|>
-      "answers" :> ReqBody '[JSON] CreateAnswerRequest :> Post '[JSON] Answer
+      Capture "questionId" (Key Question)
+        :> "answers" :> Get '[JSON] [Entity Answer] :<|>
+      Capture "questionId" (Key Question)
+        :> "answers" :> ReqBody '[JSON] CreateAnswerRequest :> Post '[JSON] (Entity Answer)
     )
 
 answerServer :: ServerT AnswerApi App
 answerServer =
-  getAllAnswers :<|> createAnswer
+  getAllAnswers :<|> postAnswer
 
 getAllAnswers :: Key Question -> App [Entity Answer]
 getAllAnswers questionId =
   runDb $ getAnswersByQuestionId questionId
 
 
-createAnswer :: Key Question -> CreateAnswerRequest -> App Answer
-createAnswer questionId req = undefined
+postAnswer :: Key Question -> CreateAnswerRequest -> App (Entity Answer)
+postAnswer questionId req = do
+  question <- runDb $ checkQuestion questionId
+  now <- liftIO getCurrentTime
+  case question of
+    Nothing -> throwError $ err400 { errBody = "Question not found"}
+    Just q ->
+      runDb $ createAnswer questionId (content req) (userId req) now
 
 data CreateAnswerRequest = CreateAnswerRequest
   { content :: Text
+  , userId :: Int
   } deriving (Eq, Show, Generic)
 
 instance FromJSON CreateAnswerRequest
