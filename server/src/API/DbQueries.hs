@@ -27,6 +27,10 @@ import           Model
 import           Data.Text                      ( Text )
 import           Data.Time                      ( UTCTime )
 import           Data.Maybe                     ( listToMaybe )
+import           Control.Monad.Except           ( MonadError
+                                                , throwError
+                                                )
+
 
 
 
@@ -79,3 +83,12 @@ checkAnswer questionId answerId = fmap listToMaybe $ select $ from $ \ans -> do
 
 updateAnswer :: Key Answer -> Text -> DbQuery Answer
 updateAnswer answerId content = updateGet answerId [AnswerContent P.=. content]
+
+
+deleteAnswerFromDb :: Key Answer -> DbQuery ()
+deleteAnswerFromDb answerId =
+  delete $ from $ \ans -> where_ (ans ^. AnswerId ==. val answerId)
+
+
+(!??) :: MonadError e m => m (Maybe a) -> e -> m a
+act !?? err = act >>= maybe (throwError err) return

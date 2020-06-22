@@ -18,7 +18,8 @@ import Data.Time (getCurrentTime)
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Maybe (fromMaybe)
-import API.DbQueries (getQuestions, insertQuestion, checkQuestion, updateQuestion, deleteQuestionById)
+import API.DbQueries ((!??), getQuestions, insertQuestion, checkQuestion, updateQuestion, deleteQuestionById)
+
 
 type QuestionApi =
     "api" :> "questions" :>
@@ -29,9 +30,12 @@ type QuestionApi =
         Capture "questionId" (Key Question) :> Delete '[JSON] ()
       )
 
+
 questionServer :: ServerT QuestionApi App
 questionServer =
   getAllQuestions :<|> postQuestion :<|> putQuestion :<|> deleteQuestion
+
+
 
 getAllQuestions :: App [Entity Question]
 getAllQuestions = runDb getQuestions
@@ -42,19 +46,22 @@ postQuestion CreateQuestionRequest {..} = do
   now <- liftIO getCurrentTime
   runDb $ insertQuestion (Question title content now userId)
 
+
 putQuestion :: Key Question -> UpdateQuestionRequest -> App Question
 putQuestion questionId req = do
-  existing <- runDb $ checkQuestion questionId
-  case existing of
-    Nothing -> throwError $ err400 { errBody = "Question does not exist"}
-    Just q ->
-      runDb $ updateQuestion questionId newTitle newContent
-        where
-          newTitle = fromMaybe (questionTitle q) (updatedTitle req)
-          newContent = fromMaybe (questionContent q) (updatedContent req)
+  q <- runDb (checkQuestion questionId) !?? err400 { errBody = "Question not found" }
+  runDb $ updateQuestion questionId (newTitle q) (newContent q)
+    where
+      newTitle q = fromMaybe (questionTitle q) (updatedTitle req)
+      newContent q = fromMaybe (questionContent q) (updatedContent req)
+
 
 deleteQuestion :: Key Question -> App ()
 deleteQuestion = runDb . deleteQuestionById
+
+
+---- REQUEST ----
+
 
 data CreateQuestionRequest = CreateQuestionRequest
   { title :: Text

@@ -16,9 +16,9 @@ import Data.Text (Text(..))
 import Data.Time (getCurrentTime)
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (FromJSON, ToJSON)
-import API.DbQueries (
-  getAnswersByQuestionId, checkQuestion, createAnswer, checkAnswer, updateAnswer)
-import Control.Monad.Except (MonadError)
+import API.DbQueries ( (!??),
+  getAnswersByQuestionId, checkQuestion, createAnswer, checkAnswer, updateAnswer, deleteAnswerFromDb)
+
 
 type AnswerApi =
   "api" :> "questions" :>
@@ -27,18 +27,25 @@ type AnswerApi =
             :> "answers" :> Get '[JSON] [Entity Answer]
       :<|>
         Capture "questionId" (Key Question)
-            :> "answers" :> ReqBody '[JSON] CreateAnswerRequest
+            :> "answers"
+            :> ReqBody '[JSON] CreateAnswerRequest
             :> Post '[JSON] (Entity Answer)
       :<|>
         Capture "questionId" (Key Question)
-            :> "answers" :> Capture "answerId" (Key Answer)
+            :> "answers"
+            :> Capture "answerId" (Key Answer)
             :> ReqBody '[JSON] UpdateAnswerRequest
             :> Put '[JSON] Answer
+      :<|>
+        Capture "questionId" (Key Question)
+            :> "answers"
+            :> Capture "answerId" (Key Answer)
+            :> Delete '[JSON] ()
     )
 
 answerServer :: ServerT AnswerApi App
 answerServer =
-  getAllAnswers :<|> postAnswer :<|> putAnswer
+  getAllAnswers :<|> postAnswer :<|> putAnswer :<|> deleteAnswer
 
 getAllAnswers :: Key Question -> App [Entity Answer]
 getAllAnswers questionId =
@@ -59,6 +66,13 @@ putAnswer questionId answerId req = do
   runDb $ updateAnswer answerId (newContent req)
 
 
+deleteAnswer :: Key Question -> Key Answer -> App ()
+deleteAnswer questionId answerId = do
+  _ <- runDb (checkQuestion questionId) !?? err400 { errBody = "Question not found" }
+  _ <- runDb (checkAnswer questionId answerId) !?? err400 { errBody = "Asnwer not found"}
+  runDb $ deleteAnswerFromDb answerId
+
+
 ---- REQUESTS ----
 
 data CreateAnswerRequest = CreateAnswerRequest
@@ -76,5 +90,3 @@ data UpdateAnswerRequest = UpdateAnswerRequest
 instance FromJSON UpdateAnswerRequest
 instance ToJSON UpdateAnswerRequest
 
-(!??) :: MonadError e m => m (Maybe a) -> e -> m a
-act !?? err = act >>= maybe (throwError err) return
