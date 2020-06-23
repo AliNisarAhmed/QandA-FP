@@ -9,6 +9,7 @@ import Element.Font as Font
 import Element.Input as Input exposing (search)
 import Page.AskQuestion as AskQuestion exposing (Msg(..))
 import Page.Home as Home exposing (Msg(..))
+import Page.QuestionDetails as QuestionDetails
 import Route exposing (Route(..))
 import Url
 
@@ -26,6 +27,7 @@ type Page
     = LandingPage
     | HomePage Home.Model
     | AskQuestionPage AskQuestion.Model
+    | QuestionDetailsPage QuestionDetails.Model
     | NotFoundPage
 
 
@@ -35,6 +37,7 @@ type Msg
     | OnSearchChange String
     | HomePageMsg Home.Msg
     | AskQuestionMsg AskQuestion.Msg
+    | QuestionDetailsPageMsg QuestionDetails.Msg
 
 
 
@@ -81,7 +84,7 @@ initCurrentPage ( model, currentCommands ) =
                     in
                     ( AskQuestionPage pageModel, Cmd.map AskQuestionMsg pageCmds )
 
-                Route.NotFoundRoute ->
+                _ ->
                     ( NotFoundPage, Cmd.none )
     in
     ( { model | currentPage = currentPage }

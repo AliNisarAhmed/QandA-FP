@@ -8,7 +8,7 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Http
-import Json.Decode exposing (Decoder, field, int, list, map4, string)
+import Json exposing (Question, questionIdToString, questionListDecoder)
 import Route
 import Styles exposing (buttonStyles)
 
@@ -18,32 +18,10 @@ serverUrl =
     "http://localhost:5000/api"
 
 
-type alias Question =
-    { title : String
-    , content : String
-    , created : String
-    , userId : Int
-    }
-
-
 type Status
     = Loading
     | Loaded
     | Error String
-
-
-questionDecoder : Decoder Question
-questionDecoder =
-    map4 Question
-        (field "title" string)
-        (field "content" string)
-        (field "created" string)
-        (field "userId" int)
-
-
-questionListDecoder : Decoder (List Question)
-questionListDecoder =
-    list questionDecoder
 
 
 type alias Model =
@@ -124,7 +102,10 @@ displayQuestion q =
         ]
     <|
         E.column [ E.width <| E.px 700 ]
-            [ E.el [ Font.bold ] <| E.text q.title
+            [ E.link [ Font.bold ] <|
+                { url = "questions/" ++ questionIdToString q.id
+                , label = E.text q.title
+                }
             , E.row [ E.alignLeft ]
                 [ E.paragraph [ E.alignLeft ] <|
                     [ E.text <| (String.left 50 q.content ++ "...") ]
