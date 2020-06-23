@@ -26,7 +26,7 @@ encodeQuestion model =
     E.object
         [ ( "title", E.string model.title )
         , ( "content", E.string model.content )
-        , ( "userId", E.int 5 )
+        , ( "userId", E.int 1 )
         ]
 
 

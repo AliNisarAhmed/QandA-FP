@@ -65,7 +65,10 @@ init key =
 
 getData : Cmd Msg
 getData =
-    Http.get { url = serverUrl ++ "/questions", expect = Http.expectJson GotQuestions questionListDecoder }
+    Http.get
+        { url = serverUrl ++ "/questions"
+        , expect = Http.expectJson GotQuestions questionListDecoder
+        }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

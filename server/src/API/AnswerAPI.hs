@@ -77,7 +77,7 @@ deleteAnswer questionId answerId = do
 
 data CreateAnswerRequest = CreateAnswerRequest
   { content :: Text
-  , userId :: Int
+  , userId :: Key User
   } deriving (Eq, Show, Generic)
 
 instance FromJSON CreateAnswerRequest

@@ -63,7 +63,7 @@ insertQuestion = insertEntity
 
 
 createAnswer
-  :: Key Question -> Text -> Int -> UTCTime -> DbQuery (Entity Answer)
+  :: Key Question -> Text -> Key User -> UTCTime -> DbQuery (Entity Answer)
 createAnswer questionId content userId now =
   insertEntity (Answer questionId content userId now)
 

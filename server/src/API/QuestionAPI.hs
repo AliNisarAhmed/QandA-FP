@@ -66,7 +66,7 @@ deleteQuestion = runDb . deleteQuestionById
 data CreateQuestionRequest = CreateQuestionRequest
   { title :: Text
   , content :: Text
-  , userId :: Int
+  , userId :: Key User
   } deriving (Eq, Show, Generic)
 
 instance FromJSON CreateQuestionRequest

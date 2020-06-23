@@ -31,16 +31,21 @@ import           Data.Time                      ( UTCTime )
 import           Data.Text                      ( Text(..) )
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
+User
+    name Text
+    deriving Eq Show
+
 Question json
     title Text
     content Text
     created UTCTime default=now()
-    user_id Int
+    userId UserId
     deriving Eq Show
 
 Answer json
     questionId QuestionId
     content Text
-    user_id Int
+    userId UserId
     created UTCTime default=now()
+    deriving Eq Show
 |]
