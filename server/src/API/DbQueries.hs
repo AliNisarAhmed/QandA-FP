@@ -1,3 +1,4 @@
+
 module API.DbQueries where
 
 import           Database                       ( runDb
@@ -22,6 +23,12 @@ import           Database.Esqueleto             ( select
                                                 , insertEntity
                                                 , getBy
                                                 , selectFirst
+                                                , InnerJoin(..)
+                                                , on
+                                                , SqlExpr(..)
+                                                , Value(..)
+                                                , entityKey
+                                                , entityVal
                                                 )
 import           Model
 import           Data.Text                      ( Text )
@@ -30,6 +37,8 @@ import           Data.Maybe                     ( listToMaybe )
 import           Control.Monad.Except           ( MonadError
                                                 , throwError
                                                 )
+import           API.Requests                   ( QuestionWithAnswers(..) )
+import           Data.List                      ( groupBy )
 
 
 
@@ -88,6 +97,31 @@ updateAnswer answerId content = updateGet answerId [AnswerContent P.=. content]
 deleteAnswerFromDb :: Key Answer -> DbQuery ()
 deleteAnswerFromDb answerId =
   delete $ from $ \ans -> where_ (ans ^. AnswerId ==. val answerId)
+
+
+getQuestionWithAnswers :: Key Question -> DbQuery QuestionWithAnswers
+getQuestionWithAnswers questionId = do
+  results <- select $ from $ \(ques `InnerJoin` ans) -> do
+    on (ques ^. QuestionId ==. ans ^. AnswerQuestionId)
+    return (ques, ans)
+  return $ transform results
+
+
+transform :: [(Entity Question, Entity Answer)] -> QuestionWithAnswers
+transform results =
+  let answers        = fmap snd results
+      P.Entity _ val = fst . head $ results
+      grouped        = groupBy (\a b -> entityKey a == entityKey b) answers
+  in  QuestionWithAnswers (questionTitle val)
+                          (questionContent val)
+                          (questionCreated val)
+                          (questionUserId val)
+                          (fmap entityVal answers)
+
+
+
+
+
 
 
 (!??) :: MonadError e m => m (Maybe a) -> e -> m a

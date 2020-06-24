@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f523cf6f55257c9221144526d30fbfcee55036ea6ff7d5defd0816be8c1c7b82
+-- hash: e4406765bbc5fc494d733457e6091938410e55d030589f29a09aee2c53def147
 
 name:           server
 version:        0.1.0.0
@@ -29,6 +29,7 @@ library
       API.AnswerAPI
       API.DbQueries
       API.QuestionAPI
+      API.Requests
       Config
       Database
       Lib

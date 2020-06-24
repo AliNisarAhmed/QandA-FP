@@ -1,13 +1,11 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators   #-}
 {-# LANGUAGE RecordWildCards   #-}
-{-# LANGUAGE DeriveGeneric   #-}
 {-# LANGUAGE OverloadedStrings   #-}
 
 
 module API.QuestionAPI (questionServer, QuestionApi) where
 
-import GHC.Generics (Generic)
 import Model
 import Servant
 import Config (App(..))
@@ -18,27 +16,36 @@ import Data.Time (getCurrentTime)
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Maybe (fromMaybe)
-import API.DbQueries ((!??), getQuestions, insertQuestion, checkQuestion, updateQuestion, deleteQuestionById)
-
+import API.DbQueries ((!??), getQuestions, insertQuestion, checkQuestion, updateQuestion, deleteQuestionById, getQuestionWithAnswers)
+import API.Requests
 
 type QuestionApi =
     "api" :> "questions" :>
       (
-        Get '[JSON] [Entity Question] :<|>
-        ReqBody '[JSON] CreateQuestionRequest :> Post '[JSON] (Entity Question) :<|>
-        Capture "questionId" (Key Question) :> ReqBody '[JSON] UpdateQuestionRequest :> Put '[JSON] Question :<|>
-        Capture "questionId" (Key Question) :> Delete '[JSON] ()
+          Get '[JSON] [Entity Question]
+        :<|>
+          Capture "questionId" (Key Question) :> Get '[JSON] QuestionWithAnswers
+        :<|>
+          ReqBody '[JSON] CreateQuestionRequest :> Post '[JSON] (Entity Question)
+        :<|>
+          Capture "questionId" (Key Question) :> ReqBody '[JSON] UpdateQuestionRequest :> Put '[JSON] Question
+        :<|>
+          Capture "questionId" (Key Question) :> Delete '[JSON] ()
       )
 
 
 questionServer :: ServerT QuestionApi App
 questionServer =
-  getAllQuestions :<|> postQuestion :<|> putQuestion :<|> deleteQuestion
+  getAllQuestions :<|> getQuestion :<|> postQuestion :<|> putQuestion :<|> deleteQuestion
 
 
 
 getAllQuestions :: App [Entity Question]
 getAllQuestions = runDb getQuestions
+
+
+getQuestion :: Key Question -> App QuestionWithAnswers
+getQuestion = runDb . getQuestionWithAnswers
 
 
 postQuestion :: CreateQuestionRequest -> App (Entity Question)
@@ -58,26 +65,3 @@ putQuestion questionId req = do
 
 deleteQuestion :: Key Question -> App ()
 deleteQuestion = runDb . deleteQuestionById
-
-
----- REQUEST ----
-
-
-data CreateQuestionRequest = CreateQuestionRequest
-  { title :: Text
-  , content :: Text
-  , userId :: Key User
-  } deriving (Eq, Show, Generic)
-
-instance FromJSON CreateQuestionRequest
-instance ToJSON CreateQuestionRequest
-
-
-data UpdateQuestionRequest = UpdateQuestionRequest
-  { updatedTitle :: Maybe Text
-  , updatedContent :: Maybe Text
-  } deriving (Eq, Show, Generic)
-
-instance FromJSON UpdateQuestionRequest
-instance ToJSON UpdateQuestionRequest
-

@@ -1,8 +1,8 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators   #-}
-{-# LANGUAGE RecordWildCards   #-}
-{-# LANGUAGE DeriveGeneric   #-}
 {-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE DuplicateRecordFields #-}
+
 
 module API.AnswerAPI (answerServer, AnswerApi) where
 
@@ -18,7 +18,7 @@ import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (FromJSON, ToJSON)
 import API.DbQueries ( (!??),
   getAnswersByQuestionId, checkQuestion, createAnswer, checkAnswer, updateAnswer, deleteAnswerFromDb)
-
+import API.Requests
 
 type AnswerApi =
   "api" :> "questions" :>
@@ -56,7 +56,12 @@ postAnswer :: Key Question -> CreateAnswerRequest -> App (Entity Answer)
 postAnswer questionId req = do
   question <- runDb (checkQuestion questionId) !?? err400 { errBody = "Question not found"}
   now <- liftIO getCurrentTime
-  runDb $ createAnswer questionId (content req) (userId req) now
+  runDb $
+    createAnswer
+      questionId
+      (content (req :: CreateAnswerRequest))
+      (userId (req :: CreateAnswerRequest))
+      now
 
 
 putAnswer :: Key Question -> Key Answer -> UpdateAnswerRequest -> App Answer
@@ -71,22 +76,4 @@ deleteAnswer questionId answerId = do
   _ <- runDb (checkQuestion questionId) !?? err400 { errBody = "Question not found" }
   _ <- runDb (checkAnswer questionId answerId) !?? err400 { errBody = "Asnwer not found"}
   runDb $ deleteAnswerFromDb answerId
-
-
----- REQUESTS ----
-
-data CreateAnswerRequest = CreateAnswerRequest
-  { content :: Text
-  , userId :: Key User
-  } deriving (Eq, Show, Generic)
-
-instance FromJSON CreateAnswerRequest
-instance ToJSON CreateAnswerRequest
-
-data UpdateAnswerRequest = UpdateAnswerRequest
-  { newContent :: Text
-  } deriving (Eq, Show, Generic)
-
-instance FromJSON UpdateAnswerRequest
-instance ToJSON UpdateAnswerRequest
 
