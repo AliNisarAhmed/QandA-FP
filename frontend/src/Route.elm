@@ -37,12 +37,8 @@ routeToString route =
 
 parseUrl : Url -> Route
 parseUrl url =
-    case UP.parse matchRoute url of
-        Just route ->
-            route
-
-        Nothing ->
-            NotFoundRoute
+    UP.parse matchRoute url
+        |> Maybe.withDefault NotFoundRoute
 
 
 matchRoute : UP.Parser (Route -> a) a

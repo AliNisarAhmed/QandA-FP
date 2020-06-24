@@ -84,6 +84,13 @@ initCurrentPage ( model, currentCommands ) =
                     in
                     ( AskQuestionPage pageModel, Cmd.map AskQuestionMsg pageCmds )
 
+                Route.QuestionDetailsRoute questionId ->
+                    let
+                        ( pageModel, pageCmds ) =
+                            QuestionDetails.init model.key questionId
+                    in
+                    ( QuestionDetailsPage pageModel, Cmd.map QuestionDetailsPageMsg pageCmds )
+
                 _ ->
                     ( NotFoundPage, Cmd.none )
     in
@@ -100,7 +107,12 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case ( msg, model.currentPage ) of
         ( LinkClicked urlRequest, _ ) ->
-            ( model, Cmd.none )
+            case urlRequest of
+                Browser.External href ->
+                    ( model, Nav.load href )
+
+                Browser.Internal url ->
+                    ( model, Nav.pushUrl model.key (Url.toString url) )
 
         ( UrlChanged url, _ ) ->
             let
@@ -130,6 +142,15 @@ update msg model =
             , Cmd.map AskQuestionMsg updatedCmds
             )
 
+        ( QuestionDetailsPageMsg pageMsg, QuestionDetailsPage pageModel ) ->
+            let
+                ( updatedModel, updatedCmds ) =
+                    QuestionDetails.update pageMsg pageModel
+            in
+            ( { model | currentPage = QuestionDetailsPage updatedModel }
+            , Cmd.map QuestionDetailsPageMsg updatedCmds
+            )
+
         ( _, _ ) ->
             ( model, Cmd.none )
 
@@ -154,6 +175,9 @@ view model =
 
                 AskQuestionPage pageModel ->
                     ( "Ask Question", AskQuestion.view pageModel |> E.map AskQuestionMsg )
+
+                QuestionDetailsPage pageModel ->
+                    ( "Question Details", QuestionDetails.view pageModel |> E.map QuestionDetailsPageMsg )
     in
     { title = title
     , body =
