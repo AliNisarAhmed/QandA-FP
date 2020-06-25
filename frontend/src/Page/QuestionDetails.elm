@@ -14,7 +14,7 @@ import Json
         , questionIdToString
         , questionWithAnswersDecoder
         )
-import Json.Decode exposing (errorToString)
+import RemoteData as RemoteData exposing (RemoteData(..), WebData)
 
 
 serverUrl : String
@@ -22,32 +22,24 @@ serverUrl =
     "http://localhost:5000/api"
 
 
-type Status
-    = Loading
-    | Loaded
-    | Error
-
-
 type alias Model =
-    { question : Maybe QuestionWithAnswers
+    { question : WebData QuestionWithAnswers
     , questionId : QuestionId
     , key : Nav.Key
-    , status : Status
     , error : Maybe String
     }
 
 
 type Msg
     = NoOp String
-    | ServerResponse (Result Http.Error QuestionWithAnswers)
+    | ServerResponse (WebData QuestionWithAnswers)
 
 
 init : Nav.Key -> QuestionId -> ( Model, Cmd Msg )
 init key questionId =
-    ( { question = Nothing
+    ( { question = Loading
       , key = key
       , questionId = questionId
-      , status = Loading
       , error = Nothing
       }
     , fetchQuestionDetails questionId
@@ -57,11 +49,8 @@ init key questionId =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ServerResponse (Err err) ->
-            ( { model | error = Just <| errorToString err, status = Error }, Cmd.none )
-
-        ServerResponse (Ok res) ->
-            ( { model | question = Just res, status = Loaded }, Cmd.none )
+        ServerResponse res ->
+            ( { model | question = res }, Cmd.none )
 
         NoOp _ ->
             ( model, Cmd.none )
@@ -75,7 +64,7 @@ fetchQuestionDetails : QuestionId -> Cmd Msg
 fetchQuestionDetails (QuestionId id) =
     Http.get
         { url = serverUrl ++ "/questions/" ++ String.fromInt id
-        , expect = Http.expectJson ServerResponse questionWithAnswersDecoder
+        , expect = Http.expectJson (ServerResponse << RemoteData.fromResult) questionWithAnswersDecoder
         }
 
 
@@ -86,40 +75,32 @@ fetchQuestionDetails (QuestionId id) =
 view : Model -> Element Msg
 view model =
     let
-        questionBox =
-            case model.question of
-                Nothing ->
-                    [ E.el [] <| E.text "No Questiion Found" ]
-
-                Just q ->
-                    [ E.row [] [ E.text q.title ]
-                    , E.row [] [ E.text q.content ]
-                    , E.row [] [ E.text q.created ]
-                    ]
-
-        answers =
-            case model.question of
-                Nothing ->
-                    []
-
-                Just q ->
-                    q.answers
-
         content =
-            case model.status of
+            case model.question of
                 Loading ->
                     E.el [] <| E.text "Loading..."
 
-                Loaded ->
+                NotAsked ->
+                    E.el [] <| E.text "Initializing..."
+
+                Success question ->
                     E.column [] <|
-                        questionBox
-                            ++ List.map displayAnswer answers
+                        questionBox question
+                            ++ List.map displayAnswer question.answers
                             ++ answerBox
 
-                Error ->
-                    E.el [] <| E.text <| Maybe.withDefault "error occurred" model.error
+                Failure err ->
+                    E.el [] <| E.text <| errorToString err
     in
     content
+
+
+questionBox : QuestionWithAnswers -> List (Element Msg)
+questionBox q =
+    [ E.row [] [ E.text q.title ]
+    , E.row [] [ E.text q.content ]
+    , E.row [] [ E.text q.created ]
+    ]
 
 
 answerBox : List (Element Msg)
