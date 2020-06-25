@@ -65,6 +65,12 @@ init flags url key =
     initCurrentPage ( model, Cmd.none )
 
 
+
+-- This function is basically a Route -> Page converter
+-- depending on the route, it initiates the corresponding page
+-- new Route value is set in update's URLChanged case branch
+
+
 initCurrentPage : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 initCurrentPage ( model, currentCommands ) =
     let

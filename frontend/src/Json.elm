@@ -1,7 +1,26 @@
 module Json exposing (..)
 
-import Json.Decode as Decode exposing (Decoder, field, int, list, map4, string)
+import Json.Decode as Decode exposing (Decoder, int, list, string)
 import Json.Decode.Pipeline exposing (required)
+
+
+questionWithAnswersDecoder : Decoder QuestionWithAnswers
+questionWithAnswersDecoder =
+    Decode.succeed QuestionWithAnswers
+        |> required "title" string
+        |> required "content" string
+        |> required "created" string
+        |> required "userId" userIdDecoder
+        |> required "answers" (list answerValueDecoder)
+
+
+answerValueDecoder : Decoder AnswerValue
+answerValueDecoder =
+    Decode.succeed AnswerValue
+        |> required "questionid" questionIdDecoder
+        |> required "content" string
+        |> required "created" string
+        |> required "userId" userIdDecoder
 
 
 questionListDecoder : Decoder (List Question)
@@ -76,6 +95,23 @@ userIdToString (UserId id) =
 
 type UserId
     = UserId Int
+
+
+type alias QuestionWithAnswers =
+    { title : String
+    , content : String
+    , created : String
+    , userId : UserId
+    , answers : List AnswerValue
+    }
+
+
+type alias AnswerValue =
+    { questionId : QuestionId
+    , content : String
+    , created : String
+    , userId : UserId
+    }
 
 
 type alias Question =
