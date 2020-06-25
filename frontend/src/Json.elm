@@ -17,7 +17,7 @@ questionWithAnswersDecoder =
 answerValueDecoder : Decoder AnswerValue
 answerValueDecoder =
     Decode.succeed AnswerValue
-        |> required "questionid" questionIdDecoder
+        |> required "questionId" questionIdDecoder
         |> required "content" string
         |> required "created" string
         |> required "userId" userIdDecoder

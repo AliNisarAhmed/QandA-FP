@@ -14,6 +14,7 @@ import Json
         , questionIdToString
         , questionWithAnswersDecoder
         )
+import Json.Decode exposing (errorToString)
 
 
 serverUrl : String
@@ -24,6 +25,7 @@ serverUrl =
 type Status
     = Loading
     | Loaded
+    | Error
 
 
 type alias Model =
@@ -31,6 +33,7 @@ type alias Model =
     , questionId : QuestionId
     , key : Nav.Key
     , status : Status
+    , error : Maybe String
     }
 
 
@@ -45,6 +48,7 @@ init key questionId =
       , key = key
       , questionId = questionId
       , status = Loading
+      , error = Nothing
       }
     , fetchQuestionDetails questionId
     )
@@ -54,7 +58,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         ServerResponse (Err err) ->
-            ( model, Cmd.none )
+            ( { model | error = Just <| errorToString err, status = Error }, Cmd.none )
 
         ServerResponse (Ok res) ->
             ( { model | question = Just res, status = Loaded }, Cmd.none )
@@ -111,6 +115,9 @@ view model =
                         questionBox
                             ++ List.map displayAnswer answers
                             ++ answerBox
+
+                Error ->
+                    E.el [] <| E.text <| Maybe.withDefault "error occurred" model.error
     in
     content
 
@@ -140,3 +147,22 @@ displayAnswer answer =
         [ E.row [] [ E.text answer.content ]
         , E.row [] [ E.text answer.created ]
         ]
+
+
+errorToString : Http.Error -> String
+errorToString err =
+    case err of
+        Http.BadBody str ->
+            str
+
+        Http.Timeout ->
+            "Time out"
+
+        Http.BadUrl str ->
+            str
+
+        Http.BadStatus int ->
+            "bad status: " ++ String.fromInt int
+
+        Http.NetworkError ->
+            "Network Error"
