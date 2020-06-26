@@ -11,6 +11,7 @@ import Page.AskQuestion as AskQuestion exposing (Msg(..))
 import Page.Home as Home exposing (Msg(..))
 import Page.QuestionDetails as QuestionDetails
 import Route exposing (Route(..))
+import Styles
 import Url
 
 
@@ -188,7 +189,7 @@ view model =
     { title = title
     , body =
         [ E.layout [] <|
-            E.column [ E.width E.fill ]
+            E.column [ E.width E.fill, E.height E.fill ]
                 [ navbar model
                 , currentView
                 ]
@@ -199,17 +200,7 @@ view model =
 navbar : Model -> Element Msg
 navbar model =
     E.row
-        [ E.spaceEvenly
-        , E.width E.fill
-        , E.paddingXY 10 10
-        , Border.shadow
-            { offset = ( 1.0, 1.0 )
-            , size = 2.0
-            , blur = 2.0
-            , color = Colors.gray
-            }
-        , E.height <| E.px 70
-        ]
+        Styles.navbarStyles
         [ E.link [] { url = "/", label = E.el [ Font.bold, Font.size 20 ] <| E.text "Q & A" }
         , searchBar model
         , E.el [] <| E.text "Sign In"
@@ -220,7 +211,7 @@ searchBar : Model -> Element Msg
 searchBar model =
     case model.currentPage of
         HomePage _ ->
-            E.el [ E.centerX ] <|
+            E.el Styles.searchbarStyles <|
                 Input.search [ E.width <| E.px 300 ]
                     { onChange = OnSearchChange
                     , text = model.search

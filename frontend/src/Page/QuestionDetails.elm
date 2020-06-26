@@ -1,7 +1,11 @@
 module Page.QuestionDetails exposing (..)
 
 import Browser.Navigation as Nav
+import Colors
 import Element as E exposing (Element)
+import Element.Background as Background
+import Element.Border as Border
+import Element.Font as Font
 import Element.Input as Input
 import Http
 import Json
@@ -15,11 +19,16 @@ import Json
         , questionWithAnswersDecoder
         )
 import RemoteData as RemoteData exposing (RemoteData(..), WebData)
+import Styles
 
 
 serverUrl : String
 serverUrl =
     "http://localhost:5000/api"
+
+
+explain =
+    E.explain Debug.todo
 
 
 type alias Model =
@@ -84,10 +93,14 @@ view model =
                     E.el [] <| E.text "Initializing..."
 
                 Success question ->
-                    E.column [] <|
-                        questionBox question
-                            ++ List.map displayAnswer question.answers
-                            ++ answerBox
+                    E.column Styles.questionDetailsPageStyle
+                        [ E.column
+                            Styles.contentBoxStyles
+                          <|
+                            [ questionBox question ]
+                                ++ List.map displayAnswer question.answers
+                                ++ answerBox
+                        ]
 
                 Failure err ->
                     E.el [] <| E.text <| errorToString err
@@ -95,12 +108,13 @@ view model =
     content
 
 
-questionBox : QuestionWithAnswers -> List (Element Msg)
+questionBox : QuestionWithAnswers -> Element Msg
 questionBox q =
-    [ E.row [] [ E.text q.title ]
-    , E.row [] [ E.text q.content ]
-    , E.row [] [ E.text q.created ]
-    ]
+    E.column Styles.questionBox <|
+        [ E.row Styles.titleStyles [ E.text q.title ]
+        , E.row Styles.contentStyles [ E.text q.content ]
+        , E.row Styles.subTextStyles [ E.text q.created ]
+        ]
 
 
 answerBox : List (Element Msg)
@@ -114,7 +128,7 @@ answerBox =
             , label = Input.labelAbove [ E.alignLeft ] <| E.text "Content"
             , spellcheck = False
             }
-        , Input.button []
+        , Input.button Styles.buttonStyles
             { onPress = Nothing
             , label = E.text "Submit Answer"
             }
@@ -124,9 +138,9 @@ answerBox =
 
 displayAnswer : AnswerValue -> Element Msg
 displayAnswer answer =
-    E.column []
-        [ E.row [] [ E.text answer.content ]
-        , E.row [] [ E.text answer.created ]
+    E.column Styles.answerDisplay
+        [ E.row Styles.contentStyles [ E.text answer.content ]
+        , E.row Styles.subTextStyles [ E.text answer.created ]
         ]
 
 

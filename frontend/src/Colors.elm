@@ -18,11 +18,16 @@ primaryDark =
     E.rgb255 104 28 65
 
 
+bg : Color
+bg =
+    E.rgb 133 147 170
+
+
 white : Color
 white =
     E.rgb 1 1 1
 
 
-bg : Color
-bg =
-    E.rgba255 92 90 90 0.1
+black : Color
+black =
+    E.rgb 0 0 0
