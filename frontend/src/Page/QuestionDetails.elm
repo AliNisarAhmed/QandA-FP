@@ -32,7 +32,7 @@ explain =
 
 
 type alias Model =
-    { question : WebData QuestionWithAnswers
+    { question : WebData (Maybe QuestionWithAnswers)
     , questionId : QuestionId
     , key : Nav.Key
     , error : Maybe String
@@ -41,7 +41,7 @@ type alias Model =
 
 type Msg
     = NoOp String
-    | ServerResponse (WebData QuestionWithAnswers)
+    | ServerResponse (WebData (Maybe QuestionWithAnswers))
 
 
 init : Nav.Key -> QuestionId -> ( Model, Cmd Msg )
@@ -92,15 +92,20 @@ view model =
                 NotAsked ->
                     E.el [] <| E.text "Initializing..."
 
-                Success question ->
-                    E.column Styles.questionDetailsPageStyle
-                        [ E.column
-                            Styles.contentBoxStyles
-                          <|
-                            [ questionBox question ]
-                                ++ List.map displayAnswer question.answers
-                                ++ answerBox
-                        ]
+                Success mq ->
+                    case mq of
+                        Nothing ->
+                            E.el [] <| E.text "Not Found"
+
+                        Just question ->
+                            E.column Styles.questionDetailsPageStyle
+                                [ E.column
+                                    Styles.contentBoxStyles
+                                  <|
+                                    [ questionBox question ]
+                                        ++ List.map displayAnswer question.answers
+                                        ++ answerBox
+                                ]
 
                 Failure err ->
                     E.el [] <| E.text <| errorToString err
@@ -111,21 +116,20 @@ view model =
 questionBox : QuestionWithAnswers -> Element Msg
 questionBox q =
     E.column Styles.questionBox <|
-        [ E.row Styles.titleStyles [ E.text q.title ]
-        , E.row Styles.contentStyles [ E.text q.content ]
-        , E.row Styles.subTextStyles [ E.text q.created ]
+        [ E.paragraph Styles.titleStyles [ E.text q.title ]
+        , E.paragraph Styles.contentStyles [ E.text q.content ]
+        , E.paragraph Styles.subTextStyles [ E.text q.created ]
         ]
 
 
 answerBox : List (Element Msg)
 answerBox =
-    [ E.column []
-        [ E.row [] [ E.text "Your answer" ]
-        , Input.multiline []
+    [ E.column Styles.answerBox
+        [ Input.multiline []
             { onChange = NoOp
             , text = ""
             , placeholder = Nothing
-            , label = Input.labelAbove [ E.alignLeft ] <| E.text "Content"
+            , label = Input.labelAbove [ E.alignLeft ] <| E.text "Your Answer"
             , spellcheck = False
             }
         , Input.button Styles.buttonStyles

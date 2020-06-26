@@ -4,14 +4,21 @@ import Json.Decode as Decode exposing (Decoder, int, list, string)
 import Json.Decode.Pipeline exposing (required)
 
 
-questionWithAnswersDecoder : Decoder QuestionWithAnswers
+questionWithAnswersDecoder : Decoder (Maybe QuestionWithAnswers)
 questionWithAnswersDecoder =
-    Decode.succeed QuestionWithAnswers
-        |> required "title" string
-        |> required "content" string
-        |> required "created" string
-        |> required "userId" userIdDecoder
-        |> required "answers" (list answerValueDecoder)
+    nullableDecoder
+        (Decode.succeed QuestionWithAnswers
+            |> required "title" string
+            |> required "content" string
+            |> required "created" string
+            |> required "userId" userIdDecoder
+            |> required "answers" (list answerValueDecoder)
+        )
+
+
+nullableDecoder : Decoder a -> Decoder (Maybe a)
+nullableDecoder decoder =
+    Decode.nullable decoder
 
 
 answerValueDecoder : Decoder AnswerValue

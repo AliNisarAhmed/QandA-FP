@@ -108,6 +108,7 @@ titleStyles : List (Attribute msg)
 titleStyles =
     [ Font.bold
     , Font.size 25
+    , Font.alignLeft
     ]
 
 
@@ -115,6 +116,7 @@ contentStyles : List (Attribute msg)
 contentStyles =
     [ Font.size 20
     , Font.color Colors.gray
+    , Font.alignLeft
     ]
 
 
@@ -124,6 +126,7 @@ subTextStyles =
     , Font.italic
     , Font.light
     , Font.color Colors.gray
+    , Font.alignLeft
     ]
 
 
@@ -133,4 +136,13 @@ answerDisplay =
     , E.width E.fill
     , E.paddingXY 0 20
     , E.spacingXY 0 10
+    ]
+
+
+answerBox : List (Attribute msg)
+answerBox =
+    [ E.centerX
+    , E.width E.fill
+    , E.paddingXY 10 30
+    , E.spacingXY 0 40
     ]
