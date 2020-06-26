@@ -104,26 +104,18 @@ deleteAnswerFromDb answerId =
 
 getQuestionWithAnswers :: Key Question -> DbQuery (Maybe QuestionWithAnswers)
 getQuestionWithAnswers questionId = do
-  results <- select $ from $ \(ques `FullOuterJoin` ans) -> do
-    on (ques ^. QuestionId ==. ans ^. AnswerQuestionId)
-    where_ (ques ^. QuestionId ==. val questionId)
-    return (ques, ans)
-  return $ transform results
-
-
-transform :: [(Entity Question, Entity Answer)] -> Maybe QuestionWithAnswers
-transform results =
-  let answers = fmap snd results
-      entity  = headMay $ fmap fst results
-      grouped = groupBy (\a b -> entityKey a == entityKey b) answers
-  in  case entity of
-        Nothing               -> Nothing
-        Just (P.Entity _ val) -> Just $ QuestionWithAnswers
-          (questionTitle val)
-          (questionContent val)
-          (questionCreated val)
-          (questionUserId val)
-          (fmap entityVal answers)
+  mq <- get questionId
+  case mq of
+    Nothing       -> return Nothing
+    Just question -> do
+      answers <- select $ from $ \ans -> do
+        where_ (ans ^. AnswerQuestionId ==. val questionId)
+        return ans
+      return $ Just $ QuestionWithAnswers (questionTitle question)
+                                          (questionContent question)
+                                          (questionCreated question)
+                                          (questionUserId question)
+                                          (fmap entityVal answers)
 
 
 
