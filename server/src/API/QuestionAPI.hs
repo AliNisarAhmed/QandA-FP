@@ -24,7 +24,7 @@ type QuestionApi =
       (
           Get '[JSON] [Entity Question]
         :<|>
-          Capture "questionId" (Key Question) :> Get '[JSON] QuestionWithAnswers
+          Capture "questionId" (Key Question) :> Get '[JSON] (Maybe QuestionWithAnswers)
         :<|>
           ReqBody '[JSON] CreateQuestionRequest :> Post '[JSON] (Entity Question)
         :<|>
@@ -44,7 +44,7 @@ getAllQuestions :: App [Entity Question]
 getAllQuestions = runDb getQuestions
 
 
-getQuestion :: Key Question -> App QuestionWithAnswers
+getQuestion :: Key Question -> App (Maybe QuestionWithAnswers)
 getQuestion = runDb . getQuestionWithAnswers
 
 

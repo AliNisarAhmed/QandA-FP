@@ -29,6 +29,8 @@ import           Database.Esqueleto             ( select
                                                 , Value(..)
                                                 , entityKey
                                                 , entityVal
+                                                , FullOuterJoin(..)
+                                                , LeftOuterJoin(..)
                                                 )
 import           Model
 import           Data.Text                      ( Text )
@@ -39,7 +41,8 @@ import           Control.Monad.Except           ( MonadError
                                                 )
 import           API.Requests                   ( QuestionWithAnswers(..) )
 import           Data.List                      ( groupBy )
-
+import           Safe
+import           Safe.Exact
 
 
 
@@ -99,24 +102,28 @@ deleteAnswerFromDb answerId =
   delete $ from $ \ans -> where_ (ans ^. AnswerId ==. val answerId)
 
 
-getQuestionWithAnswers :: Key Question -> DbQuery QuestionWithAnswers
+getQuestionWithAnswers :: Key Question -> DbQuery (Maybe QuestionWithAnswers)
 getQuestionWithAnswers questionId = do
-  results <- select $ from $ \(ques `InnerJoin` ans) -> do
+  results <- select $ from $ \(ques `FullOuterJoin` ans) -> do
     on (ques ^. QuestionId ==. ans ^. AnswerQuestionId)
+    where_ (ques ^. QuestionId ==. val questionId)
     return (ques, ans)
   return $ transform results
 
 
-transform :: [(Entity Question, Entity Answer)] -> QuestionWithAnswers
+transform :: [(Entity Question, Entity Answer)] -> Maybe QuestionWithAnswers
 transform results =
-  let answers        = fmap snd results
-      P.Entity _ val = fst . head $ results
-      grouped        = groupBy (\a b -> entityKey a == entityKey b) answers
-  in  QuestionWithAnswers (questionTitle val)
-                          (questionContent val)
-                          (questionCreated val)
-                          (questionUserId val)
-                          (fmap entityVal answers)
+  let answers = fmap snd results
+      entity  = headMay $ fmap fst results
+      grouped = groupBy (\a b -> entityKey a == entityKey b) answers
+  in  case entity of
+        Nothing               -> Nothing
+        Just (P.Entity _ val) -> Just $ QuestionWithAnswers
+          (questionTitle val)
+          (questionContent val)
+          (questionCreated val)
+          (questionUserId val)
+          (fmap entityVal answers)
 
 
 

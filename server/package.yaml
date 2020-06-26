@@ -38,6 +38,7 @@ dependencies:
 - monad-logger
 - bytestring
 - esqueleto
+- safe
 
 library:
   source-dirs: src
