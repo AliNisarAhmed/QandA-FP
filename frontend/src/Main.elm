@@ -15,6 +15,13 @@ import Styles
 import Url
 
 
+
+-- justinmimbs/time-extra
+-- justinmimbs/timezone-data
+-- ryannhg/date-format
+-- rtfeldman/elm-iso8601-date-strings
+
+
 explain : Attribute Msg
 explain =
     E.explain Debug.todo
@@ -188,8 +195,8 @@ view model =
     in
     { title = title
     , body =
-        [ E.layout [] <|
-            E.column [ E.width E.fill, E.height E.fill ]
+        [ E.layout Styles.layout <|
+            E.column Styles.mainSection
                 [ navbar model
                 , currentView
                 ]

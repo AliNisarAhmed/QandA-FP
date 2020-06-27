@@ -1,21 +1,16 @@
 module Page.QuestionDetails exposing (..)
 
 import Browser.Navigation as Nav
-import Colors
 import Element as E exposing (Element)
-import Element.Background as Background
-import Element.Border as Border
-import Element.Font as Font
 import Element.Input as Input
 import Http
 import Json
     exposing
         ( Answer
         , AnswerValue
-        , Question
         , QuestionId(..)
         , QuestionWithAnswers
-        , questionIdToString
+        , encodeAnswer
         , questionWithAnswersDecoder
         )
 import RemoteData as RemoteData exposing (RemoteData(..), WebData)
@@ -36,12 +31,16 @@ type alias Model =
     , questionId : QuestionId
     , key : Nav.Key
     , error : Maybe String
+    , answer : String
     }
 
 
 type Msg
     = NoOp String
     | ServerResponse (WebData (Maybe QuestionWithAnswers))
+    | OnAnswerChange String
+    | SubmitAnswer
+    | Submitted (Result Http.Error ())
 
 
 init : Nav.Key -> QuestionId -> ( Model, Cmd Msg )
@@ -50,6 +49,7 @@ init key questionId =
       , key = key
       , questionId = questionId
       , error = Nothing
+      , answer = ""
       }
     , fetchQuestionDetails questionId
     )
@@ -60,6 +60,18 @@ update msg model =
     case msg of
         ServerResponse res ->
             ( { model | question = res }, Cmd.none )
+
+        OnAnswerChange val ->
+            ( { model | answer = val }, Cmd.none )
+
+        SubmitAnswer ->
+            ( model, submitAnswer model.questionId model.answer )
+
+        Submitted (Err e) ->
+            ( { model | error = Just <| errorToString e }, Cmd.none )
+
+        Submitted (Ok _) ->
+            ( { model | answer = "", question = Loading }, fetchQuestionDetails model.questionId )
 
         NoOp _ ->
             ( model, Cmd.none )
@@ -74,6 +86,15 @@ fetchQuestionDetails (QuestionId id) =
     Http.get
         { url = serverUrl ++ "/questions/" ++ String.fromInt id
         , expect = Http.expectJson (ServerResponse << RemoteData.fromResult) questionWithAnswersDecoder
+        }
+
+
+submitAnswer : QuestionId -> String -> Cmd Msg
+submitAnswer (QuestionId id) answer =
+    Http.post
+        { url = serverUrl ++ "/questions/" ++ String.fromInt id ++ "/answers"
+        , body = Http.jsonBody (encodeAnswer answer)
+        , expect = Http.expectWhatever Submitted
         }
 
 
@@ -125,15 +146,17 @@ questionBox q =
 answerBox : List (Element Msg)
 answerBox =
     [ E.column Styles.answerBox
-        [ Input.multiline []
-            { onChange = NoOp
+        [ Input.multiline
+            [ E.height (E.fill |> E.minimum 300 |> E.maximum 600)
+            ]
+            { onChange = OnAnswerChange
             , text = ""
             , placeholder = Nothing
             , label = Input.labelAbove [ E.alignLeft ] <| E.text "Your Answer"
             , spellcheck = False
             }
         , Input.button Styles.buttonStyles
-            { onPress = Nothing
+            { onPress = Just SubmitAnswer
             , label = E.text "Submit Answer"
             }
         ]

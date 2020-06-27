@@ -40,12 +40,17 @@ navbarStyles =
     , E.height <| E.px 70
     , Border.color <| Colors.black
     , Border.width 2
+    , Font.color Colors.white
+    , Background.gradient
+        { angle = 0.6
+        , steps = [ Colors.black, Colors.navbar, Colors.bg, Colors.navbar, Colors.black ]
+        }
     ]
 
 
 searchbarStyles : List (Attribute msg)
 searchbarStyles =
-    [ E.centerX ]
+    [ E.centerX, Font.color Colors.primaryDark ]
 
 
 navbarShadow : Attribute msg
@@ -78,6 +83,7 @@ contentBoxStyles =
     , Border.color <| Colors.primaryDark
     , Border.width 1
     , E.width (E.maximum 800 <| E.px 1200)
+    , E.height E.fill
     , questionBoxShadow
     , E.paddingEach { top = 20, right = 20, left = 20, bottom = 20 }
     ]
@@ -143,6 +149,21 @@ answerBox : List (Attribute msg)
 answerBox =
     [ E.centerX
     , E.width E.fill
+    , E.height E.fill
     , E.paddingXY 10 30
     , E.spacingXY 0 40
     ]
+
+
+
+---- Main ----
+
+
+layout : List (Attribute msg)
+layout =
+    [ Background.color <| Colors.bg ]
+
+
+mainSection : List (Attribute msg)
+mainSection =
+    [ E.width E.fill, E.height E.fill ]

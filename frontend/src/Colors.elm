@@ -20,7 +20,12 @@ primaryDark =
 
 bg : Color
 bg =
-    E.rgb 133 147 170
+    E.rgb255 146 154 170
+
+
+navbar : Color
+navbar =
+    E.rgb255 40 44 53
 
 
 white : Color

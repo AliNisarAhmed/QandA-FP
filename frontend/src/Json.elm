@@ -2,6 +2,32 @@ module Json exposing (..)
 
 import Json.Decode as Decode exposing (Decoder, int, list, string)
 import Json.Decode.Pipeline exposing (required)
+import Json.Encode as Encode
+
+
+
+---- Encoders ----
+
+
+encodeAnswer : String -> Encode.Value
+encodeAnswer str =
+    Encode.object
+        [ ( "content", Encode.string str )
+        , ( "userId", Encode.int 1 )
+        ]
+
+
+encodeQuestion : { r | content : String, title : String } -> Encode.Value
+encodeQuestion { content, title } =
+    Encode.object
+        [ ( "title", Encode.string title )
+        , ( "content", Encode.string content )
+        , ( "userId", Encode.int 1 )
+        ]
+
+
+
+---- Decoders ----
 
 
 questionWithAnswersDecoder : Decoder (Maybe QuestionWithAnswers)

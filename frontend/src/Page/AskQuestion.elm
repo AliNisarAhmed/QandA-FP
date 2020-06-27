@@ -7,7 +7,7 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Http
-import Json.Encode as E
+import Json exposing (encodeQuestion)
 import Route
 import Styles exposing (buttonStyles)
 
@@ -19,15 +19,6 @@ serverUrl =
 
 explain =
     E.explain Debug.todo
-
-
-encodeQuestion : Model -> E.Value
-encodeQuestion model =
-    E.object
-        [ ( "title", E.string model.title )
-        , ( "content", E.string model.content )
-        , ( "userId", E.int 1 )
-        ]
 
 
 
