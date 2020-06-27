@@ -3,7 +3,6 @@ module Page.Home exposing (Model, Msg(..), init, update, view)
 import Browser.Navigation as Nav
 import Colors
 import Element as E exposing (Element)
-import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
@@ -11,6 +10,7 @@ import Http
 import Json exposing (Question, questionIdToString, questionListDecoder)
 import Route
 import Styles exposing (buttonStyles)
+import Utils exposing (displayTime)
 
 
 serverUrl : String
@@ -110,4 +110,6 @@ displayQuestion q =
                 [ E.paragraph [ E.alignLeft ] <|
                     [ E.text <| (String.left 50 q.content ++ "...") ]
                 ]
+            , E.row Styles.subTextStyles
+                [ E.text <| "Asked on " ++ displayTime q.created ]
             ]

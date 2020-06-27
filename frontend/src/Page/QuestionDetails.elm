@@ -6,8 +6,7 @@ import Element.Input as Input
 import Http
 import Json
     exposing
-        ( Answer
-        , AnswerValue
+        ( AnswerValue
         , QuestionId(..)
         , QuestionWithAnswers
         , encodeAnswer
@@ -15,6 +14,7 @@ import Json
         )
 import RemoteData as RemoteData exposing (RemoteData(..), WebData)
 import Styles
+import Utils exposing (displayTime)
 
 
 serverUrl : String
@@ -139,7 +139,9 @@ questionBox q =
     E.column Styles.questionBox <|
         [ E.paragraph Styles.titleStyles [ E.text q.title ]
         , E.paragraph Styles.contentStyles [ E.text q.content ]
-        , E.paragraph Styles.subTextStyles [ E.text q.created ]
+        , E.paragraph Styles.subTextStyles
+            [ E.text <| "Asked on " ++ displayTime q.created
+            ]
         ]
 
 
@@ -167,7 +169,7 @@ displayAnswer : AnswerValue -> Element Msg
 displayAnswer answer =
     E.column Styles.answerDisplay
         [ E.row Styles.contentStyles [ E.text answer.content ]
-        , E.row Styles.subTextStyles [ E.text answer.created ]
+        , E.row Styles.subTextStyles [ E.text <| "Answered on " ++ displayTime answer.created ]
         ]
 
 
