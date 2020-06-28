@@ -14,43 +14,68 @@ import           Database                       ( runDb )
 import           Data.Aeson                     ( FromJSON
                                                 , ToJSON
                                                 )
-import           API.Requests                   ( LoginForm(..) )
+import           API.Requests                   ( SignupForm(..)
+                                                , LoginForm(..)
+                                                )
 import           Crypto.PasswordStore           ( makePassword )
 import           Control.Monad.IO.Class         ( liftIO )
-import           Data.Text                      ( unpack )
 import           Data.Text.Encoding             ( encodeUtf8 )
-import           API.DbQueries                  ( saveUser )
-
+import           API.DbQueries                  ( saveUser
+                                                , validateLoginForm
+                                                )
+import           Data.Text                      ( Text )
+import qualified Model as M
 
 
 
 type AuthApi
-  = "api" :> "auth" :> "signup" :> ReqBody '[JSON] LoginForm :> Post '[JSON] ()
+  = "api" :> "auth" :> "signup" :> ReqBody '[JSON] SignupForm :> Post '[JSON] ()
+  :<|>
+    "api" :> "auth" :> "login"
+        :> ReqBody '[JSON] LoginForm
+        :> Post '[JSON] (Headers '[ Header "Set-Cookie" SetCookie
+                                  , Header "Set-Cookie" SetCookie]
+                                  AuthenticatedUser )
 
-authServer :: ServerT AuthApi App
-authServer = signup
+authServer :: SAS.CookieSettings -> SAS.JWTSettings -> ServerT AuthApi App
+authServer cs jwts = signup :<|> login cs jwts
 
-signup :: LoginForm -> App ()
-signup (LoginForm firstName lastName email pwd cpwd) = if pwd == cpwd
-  then
-    (do
-      password <- liftIO $ makePassword (encodeUtf8 pwd) 17
-      runDb $ saveUser firstName lastName email password
-    )
+signup :: SignupForm -> App ()
+signup (SignupForm firstName lastName userName pwd cpwd) = if pwd == cpwd
+  then do
+    password <- liftIO $ makePassword (encodeUtf8 pwd) 17
+    runDb $ saveUser firstName lastName userName password
   else throwError err400 { errBody = "Passwords do not match" }
 
+login
+  :: SAS.CookieSettings
+  -> SAS.JWTSettings
+  -> LoginForm
+  -> App (Headers '[ Header "Set-Cookie" SetCookie, Header "Set-Cookie" SetCookie] AuthenticatedUser)
+login cookieSettings jwtSettings form = do
+  mu <- runDb $ validateLoginForm form
+  case mu of
+    Nothing ->
+      throwError err401
+    Just user -> do
+      let aUser = AUser (M.userFirstName user) (M.userLastName user)
+      mApplyCookies <- liftIO $ SAS.acceptLogin cookieSettings jwtSettings aUser
+      case mApplyCookies of
+        Nothing ->
+          throwError err401
+        Just applyCookies ->
+          return $ applyCookies aUser
 
 
+data AuthenticatedUser = AUser
+  { firstName :: Text
+  , lastName :: Text
+  } deriving (Show, Generic)
 
--- data AuthenticatedUser = AUser { auID :: Int
---                                 , name :: String
---                                } deriving (Show, Generic)
 
-
-
--- instance ToJSON AuthenticatedUser
--- instance FromJSON AuthenticatedUser
--- instance ToJWT AuthenticatedUser
--- instance FromJWT AuthenticatedUser
+instance ToJSON AuthenticatedUser
+instance FromJSON AuthenticatedUser
+instance ToJWT AuthenticatedUser
+instance FromJWT AuthenticatedUser
 
 

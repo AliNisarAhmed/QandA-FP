@@ -40,7 +40,9 @@ import           Data.Maybe                     ( listToMaybe )
 import           Control.Monad.Except           ( MonadError
                                                 , throwError
                                                 )
-import           API.Requests                   ( QuestionWithAnswers(..) )
+import           API.Requests                   ( QuestionWithAnswers(..)
+                                                , LoginForm(..)
+                                                )
 import           Data.List                      ( groupBy )
 import           Data.ByteString                ( ByteString )
 
@@ -120,6 +122,16 @@ getQuestionWithAnswers questionId = do
 
 saveUser :: Text -> Text -> Text -> ByteString -> DbQuery ()
 saveUser fn ln em pw = insert_ $ User fn ln em pw
+
+
+validateLoginForm :: LoginForm -> DbQuery (Maybe User)
+validateLoginForm (LoginForm username pwd) = do
+  entityUser <- getBy $ UniqueUserName username
+  return $ fmap entityVal entityUser
+
+
+
+
 
 
 

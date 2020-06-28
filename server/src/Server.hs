@@ -20,10 +20,11 @@ import           API.AuthAPI                    ( authServer
                                                 )
 import           Config                         ( App(..) )
 import           GHC.Generics                   ( Generic )
+import qualified Servant.Auth.Server           as SAS
 
 
 type API = QuestionApi :<|> AnswerApi :<|> AuthApi
 
-server :: ServerT API App
-server = questionServer :<|> answerServer :<|> authServer
+server :: SAS.CookieSettings -> SAS.JWTSettings -> ServerT API App
+server cs jwts = questionServer :<|> answerServer :<|> (authServer cs jwts)
 

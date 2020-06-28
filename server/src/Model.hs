@@ -35,7 +35,8 @@ share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 User
     firstName Text
     lastName Text
-    email Text
+    userName Text
+    UniqueUserName userName
     pwd ByteString
     deriving Eq Show
 

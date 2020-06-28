@@ -59,12 +59,20 @@ instance FromJSON UpdateAnswerRequest
 instance ToJSON UpdateAnswerRequest
 
 
-data LoginForm = LoginForm
+data SignupForm = SignupForm
   { firstName :: Text
   , lastName :: Text
   , email :: Text
   , password :: Text
   , confirmPassword :: Text
+  } deriving (Eq, Show, Generic)
+
+instance FromJSON SignupForm
+instance ToJSON SignupForm
+
+data LoginForm = LoginForm
+  { email :: Text
+  , password :: Text
   } deriving (Eq, Show, Generic)
 
 instance FromJSON LoginForm
