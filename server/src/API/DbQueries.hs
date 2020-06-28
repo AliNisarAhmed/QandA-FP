@@ -35,6 +35,7 @@ import           Database.Esqueleto             ( select
                                                 )
 import           Model
 import           Data.Text                      ( Text )
+import           Data.Text.Encoding             ( encodeUtf8 )
 import           Data.Time                      ( UTCTime )
 import           Data.Maybe                     ( listToMaybe )
 import           Control.Monad.Except           ( MonadError
@@ -45,6 +46,8 @@ import           API.Requests                   ( QuestionWithAnswers(..)
                                                 )
 import           Data.List                      ( groupBy )
 import           Data.ByteString                ( ByteString )
+import qualified Crypto.PasswordStore          as PS
+import           Control.Monad.IO.Class         ( liftIO )
 
 
 getQuestions :: DbQuery [Entity Question]
@@ -120,14 +123,22 @@ getQuestionWithAnswers questionId = do
 
 
 
-saveUser :: Text -> Text -> Text -> ByteString -> DbQuery ()
-saveUser fn ln em pw = insert_ $ User fn ln em pw
+saveUser :: Text -> Text -> Text -> Text -> DbQuery ()
+saveUser fn ln em pw = do
+  password <- liftIO $ PS.makePassword (encodeUtf8 pw) 17
+  insert_ $ User fn ln em password
 
 
 validateLoginForm :: LoginForm -> DbQuery (Maybe User)
 validateLoginForm (LoginForm username pwd) = do
-  entityUser <- getBy $ UniqueUserName username
-  return $ fmap entityVal entityUser
+  mu <- getBy $ UniqueUserName username
+  case mu of
+    Nothing -> return Nothing
+    Just entityUser ->
+      if PS.verifyPassword (encodeUtf8 pwd) (userPwd (entityVal entityUser))
+        then return $ Just $ entityVal entityUser
+        else return Nothing
+
 
 
 

@@ -17,9 +17,7 @@ import           Data.Aeson                     ( FromJSON
 import           API.Requests                   ( SignupForm(..)
                                                 , LoginForm(..)
                                                 )
-import           Crypto.PasswordStore           ( makePassword )
 import           Control.Monad.IO.Class         ( liftIO )
-import           Data.Text.Encoding             ( encodeUtf8 )
 import           API.DbQueries                  ( saveUser
                                                 , validateLoginForm
                                                 )
@@ -42,9 +40,8 @@ authServer cs jwts = signup :<|> login cs jwts
 
 signup :: SignupForm -> App ()
 signup (SignupForm firstName lastName userName pwd cpwd) = if pwd == cpwd
-  then do
-    password <- liftIO $ makePassword (encodeUtf8 pwd) 17
-    runDb $ saveUser firstName lastName userName password
+  then
+    runDb $ saveUser firstName lastName userName pwd
   else throwError err400 { errBody = "Passwords do not match" }
 
 login
