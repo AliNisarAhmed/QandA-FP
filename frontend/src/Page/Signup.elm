@@ -6,7 +6,7 @@ import Element.Input as Input
 import Http
 import Json exposing (encodeSignupForm)
 import Styles
-import Utils exposing (errorToString)
+import Utils exposing (displayErrorText, errorToString)
 
 
 explain =
@@ -101,15 +101,6 @@ submitForm model =
 
 view : Model -> Element Msg
 view model =
-    let
-        errorText =
-            case model.error of
-                Nothing ->
-                    E.none
-
-                Just e ->
-                    E.el [] <| E.text e
-    in
     E.el [ E.width E.fill ] <|
         E.column [ E.centerX ]
             [ E.row []
@@ -158,5 +149,5 @@ view model =
                 [ Input.button Styles.buttonStyles
                     { onPress = Just SubmitForm, label = E.text <| "Submit" }
                 ]
-            , errorText
+            , displayErrorText model.error
             ]
