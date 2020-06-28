@@ -12,11 +12,6 @@ import Route
 import Styles exposing (buttonStyles)
 
 
-serverUrl : String
-serverUrl =
-    "http://localhost:5000/api"
-
-
 explain =
     E.explain Debug.todo
 
@@ -71,7 +66,7 @@ update msg model =
 submitQuestion : Model -> Cmd Msg
 submitQuestion model =
     Http.post
-        { url = serverUrl ++ "/questions"
+        { url = "/api/questions"
         , body = Http.jsonBody (encodeQuestion model)
         , expect = Http.expectWhatever SubmitSucces
         }
