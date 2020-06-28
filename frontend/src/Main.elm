@@ -2,13 +2,12 @@ module Main exposing (..)
 
 import Browser exposing (Document, UrlRequest)
 import Browser.Navigation as Nav
-import Colors
 import Element as E exposing (Attribute, Element)
-import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input exposing (search)
 import Page.AskQuestion as AskQuestion exposing (Msg(..))
 import Page.Home as Home exposing (Msg(..))
+import Page.Login as Login
 import Page.QuestionDetails as QuestionDetails
 import Page.Signup as Signup
 import Route exposing (Route(..))
@@ -38,6 +37,7 @@ type Page
     | AskQuestionPage AskQuestion.Model
     | QuestionDetailsPage QuestionDetails.Model
     | SignupPage Signup.Model
+    | LoginPage Login.Model
     | NotFoundPage
 
 
@@ -48,6 +48,7 @@ type Msg
     | HomePageMsg Home.Msg
     | AskQuestionMsg AskQuestion.Msg
     | QuestionDetailsPageMsg QuestionDetails.Msg
+    | LoginPageMsg Login.Msg
     | SignupPageMsg Signup.Msg
 
 
@@ -114,6 +115,13 @@ initCurrentPage ( model, currentCommands ) =
                             Signup.init model.key
                     in
                     ( SignupPage pageModel, Cmd.map SignupPageMsg pageCmds )
+
+                Route.LoginRoute ->
+                    let
+                        ( pageModel, pageCmds ) =
+                            Login.init model.key
+                    in
+                    ( LoginPage pageModel, Cmd.map LoginPageMsg pageCmds )
 
                 _ ->
                     ( NotFoundPage, Cmd.none )
@@ -184,6 +192,15 @@ update msg model =
             , Cmd.map SignupPageMsg updatedCmds
             )
 
+        ( LoginPageMsg pageMsg, LoginPage pageModel ) ->
+            let
+                ( updatedModel, updatedCmds ) =
+                    Login.update pageMsg pageModel
+            in
+            ( { model | currentPage = LoginPage updatedModel }
+            , Cmd.map LoginPageMsg updatedCmds
+            )
+
         ( _, _ ) ->
             ( model, Cmd.none )
 
@@ -214,6 +231,9 @@ view model =
 
                 SignupPage pageModel ->
                     ( "Sign Up", Signup.view pageModel |> E.map SignupPageMsg )
+
+                LoginPage pageModel ->
+                    ( "Log In", Login.view pageModel |> E.map LoginPageMsg )
     in
     { title = title
     , body =
