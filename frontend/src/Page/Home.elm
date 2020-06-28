@@ -18,13 +18,6 @@ explain =
     E.explain Debug.todo
 
 
-
--- type Status
---     = Loading
---     | Loaded
---     | Error String
-
-
 type alias Model =
     { key : Nav.Key
     , questions : WebData (List Question)

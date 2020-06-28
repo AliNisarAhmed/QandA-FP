@@ -62,7 +62,7 @@ instance ToJSON UpdateAnswerRequest
 data SignupForm = SignupForm
   { firstName :: Text
   , lastName :: Text
-  , email :: Text
+  , userName :: Text
   , password :: Text
   , confirmPassword :: Text
   } deriving (Eq, Show, Generic)

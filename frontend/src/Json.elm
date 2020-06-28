@@ -9,6 +9,17 @@ import Json.Encode as Encode
 ---- Encoders ----
 
 
+encodeSignupForm : { r | userName : String, firstName : String, lastName : String, password : String, confirmPassword : String } -> Encode.Value
+encodeSignupForm { userName, firstName, lastName, password, confirmPassword } =
+    Encode.object
+        [ ( "userName", Encode.string userName )
+        , ( "firstName", Encode.string firstName )
+        , ( "lastName", Encode.string lastName )
+        , ( "password", Encode.string password )
+        , ( "confirmPassword", Encode.string confirmPassword )
+        ]
+
+
 encodeAnswer : String -> Encode.Value
 encodeAnswer str =
     Encode.object
