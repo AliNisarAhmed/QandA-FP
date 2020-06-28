@@ -29,10 +29,14 @@ import           Database.Persist.TH            ( mkMigrate
 import           GHC.Generics                   ( Generic )
 import           Data.Time                      ( UTCTime )
 import           Data.Text                      ( Text(..) )
+import           Data.ByteString                ( ByteString )
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 User
-    name Text
+    firstName Text
+    lastName Text
+    email Text
+    pwd ByteString
     deriving Eq Show
 
 Question json

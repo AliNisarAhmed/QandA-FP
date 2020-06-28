@@ -21,6 +21,7 @@ import           Database.Esqueleto             ( select
                                                 , updateGet
                                                 , delete
                                                 , insertEntity
+                                                , insert_
                                                 , getBy
                                                 , selectFirst
                                                 , InnerJoin(..)
@@ -41,9 +42,7 @@ import           Control.Monad.Except           ( MonadError
                                                 )
 import           API.Requests                   ( QuestionWithAnswers(..) )
 import           Data.List                      ( groupBy )
-import           Safe
-import           Safe.Exact
-
+import           Data.ByteString                ( ByteString )
 
 
 getQuestions :: DbQuery [Entity Question]
@@ -119,7 +118,8 @@ getQuestionWithAnswers questionId = do
 
 
 
-
+saveUser :: Text -> Text -> Text -> ByteString -> DbQuery ()
+saveUser fn ln em pw = insert_ $ User fn ln em pw
 
 
 

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 369f58179764908a9934c0ad4ab0b85919684fe55093c60d11d37b96d77d4db7
+-- hash: 3cd1e7986b61369a1ab5172be161b0cca5af8e37e279c6b9c0d98cc75c1bce5b
 
 name:           server
 version:        0.1.0.0
@@ -27,6 +27,7 @@ source-repository head
 library
   exposed-modules:
       API.AnswerAPI
+      API.AuthAPI
       API.DbQueries
       API.QuestionAPI
       API.Requests
@@ -49,8 +50,11 @@ library
     , persistent
     , persistent-postgresql
     , persistent-template
+    , pwstore-fast
     , safe
     , servant
+    , servant-auth
+    , servant-auth-server
     , servant-options
     , servant-server
     , text
@@ -79,8 +83,11 @@ executable server-exe
     , persistent
     , persistent-postgresql
     , persistent-template
+    , pwstore-fast
     , safe
     , servant
+    , servant-auth
+    , servant-auth-server
     , servant-options
     , servant-server
     , server
@@ -114,8 +121,11 @@ test-suite server-test
     , persistent
     , persistent-postgresql
     , persistent-template
+    , pwstore-fast
     , safe
     , servant
+    , servant-auth
+    , servant-auth-server
     , servant-options
     , servant-server
     , server
