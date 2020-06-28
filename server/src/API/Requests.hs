@@ -71,7 +71,7 @@ instance FromJSON SignupForm
 instance ToJSON SignupForm
 
 data LoginForm = LoginForm
-  { email :: Text
+  { userName :: Text
   , password :: Text
   } deriving (Eq, Show, Generic)
 

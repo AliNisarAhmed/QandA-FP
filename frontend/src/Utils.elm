@@ -1,6 +1,7 @@
 module Utils exposing (..)
 
 import DateFormat as DF
+import Element as E exposing (Attribute, Element)
 import Http
 import Iso8601 as Iso
 import Time
@@ -41,3 +42,13 @@ errorToString err =
 
         Http.NetworkError ->
             "Network Error"
+
+
+displayErrorText : Maybe String -> Element msg
+displayErrorText me =
+    case me of
+        Nothing ->
+            E.none
+
+        Just error ->
+            E.el [] <| E.text error
