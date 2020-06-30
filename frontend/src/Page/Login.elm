@@ -4,8 +4,9 @@ import Browser.Navigation as Nav
 import Element as E exposing (Attribute, Element)
 import Element.Input as Input
 import Http
-import Json exposing (encodeLoginForm)
+import Json exposing (CurrentUser, currentUserDecoder, encodeLoginForm)
 import Page.Signup exposing (Msg(..))
+import RemoteData exposing (RemoteData(..), WebData)
 import Styles
 import Utils exposing (displayErrorText, errorToString)
 
@@ -18,6 +19,7 @@ type alias Model =
     { key : Nav.Key
     , form : LoginForm
     , error : Maybe String
+    , currentUser : Maybe CurrentUser
     }
 
 
@@ -39,7 +41,7 @@ type Msg
     | SubmitLoginForm
     | OnUsernameChange String
     | OnPasswordChange String
-    | ServerResponse (Result Http.Error ())
+    | GotCurrentUser (WebData (Maybe CurrentUser))
 
 
 init : Nav.Key -> ( Model, Cmd Msg )
@@ -47,6 +49,7 @@ init key =
     ( { key = key
       , form = initialForm
       , error = Nothing
+      , currentUser = Nothing
       }
     , Cmd.none
     )
@@ -71,11 +74,10 @@ update msg ({ form } as model) =
         SubmitLoginForm ->
             ( model, submitLoginForm model )
 
-        ServerResponse (Err e) ->
-            ( { model | error = Just <| errorToString e }, Cmd.none )
-
-        ServerResponse (Ok _) ->
-            ( model, Nav.pushUrl model.key "/" )
+        GotCurrentUser user ->
+            ( { model | currentUser = RemoteData.withDefault Nothing user }
+            , Nav.pushUrl model.key "/"
+            )
 
 
 
@@ -87,7 +89,7 @@ submitLoginForm model =
     Http.post
         { url = "/api/auth/login"
         , body = Http.jsonBody (encodeLoginForm model.form)
-        , expect = Http.expectWhatever ServerResponse
+        , expect = Http.expectJson (RemoteData.fromResult >> GotCurrentUser) currentUserDecoder
         }
 
 

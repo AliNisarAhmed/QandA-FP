@@ -49,6 +49,21 @@ encodeQuestion { content, title } =
 ---- Decoders ----
 
 
+currentUserDecoder : Decoder (Maybe CurrentUser)
+currentUserDecoder =
+    nullableDecoder
+        (Decode.succeed CurrentUser
+            |> required "firstName" string
+            |> required "lastName" string
+        )
+
+
+type alias CurrentUser =
+    { firstName : String
+    , lastName : String
+    }
+
+
 questionWithAnswersDecoder : Decoder (Maybe QuestionWithAnswers)
 questionWithAnswersDecoder =
     nullableDecoder

@@ -24,24 +24,12 @@ import           Control.Monad.Reader           ( runReaderT )
 import           Server                         ( server
                                                 , API
                                                 )
-import           Network.Wai.Middleware.Servant.Options
 import qualified Servant.Auth.Server           as SAS
 
--- app :: SAS.CookieSettings -> SAS.JWTSettings -> Config -> Application
--- app cs jwts cfg = cors (const $ Just policy) $ provideOptions api $ serve
---   api
---   (appToServer cfg)
---  where
---   policy = CorsResourcePolicy
---     { corsOrigins        = Nothing
---     , corsMethods        = ["OPTIONS", "GET", "PUT", "POST", "DELETE"]
---     , corsRequestHeaders = ["Authorization", "Content-Type"]
---     , corsExposedHeaders = Nothing
---     , corsMaxAge         = Nothing
---     , corsVaryOrigin     = False
---     , corsRequireOrigin  = False
---     , corsIgnoreFailures = False
---     }
+import qualified Network.Wai.Middleware.Servant.Options
+                                               as SO
+
+
 
 
 api :: Proxy API
@@ -56,11 +44,23 @@ mkApp
   -> SAS.JWTSettings
   -> Config
   -> Application
-mkApp cfg cs jwts ctx = serveWithContext api cfg $ hoistServerWithContext
-  api
-  (Proxy :: Proxy '[SAS.CookieSettings, SAS.JWTSettings])
-  (convertApp ctx)
-  (server cs jwts)
+mkApp cfg cs jwts ctx =
+  cors (const $ Just policy) $ serveWithContext api cfg $ hoistServerWithContext
+    api
+    (Proxy :: Proxy '[SAS.CookieSettings, SAS.JWTSettings])
+    (convertApp ctx)
+    (server cs jwts)
+ where
+  policy = CorsResourcePolicy
+    { corsOrigins        = Nothing
+    , corsMethods        = ["OPTIONS", "GET", "PUT", "POST", "DELETE"]
+    , corsRequestHeaders = ["Authorization", "Content-Type"]
+    , corsExposedHeaders = Nothing
+    , corsMaxAge         = Nothing
+    , corsVaryOrigin     = False
+    , corsRequireOrigin  = False
+    , corsIgnoreFailures = False
+    }
 
 -- appToServer :: Config -> Server API
 -- appToServer cfg = hoistServer api (convertApp cfg) server
