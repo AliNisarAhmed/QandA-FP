@@ -122,7 +122,7 @@ initCurrentPage ( model, currentCommands ) =
                 Route.SignupRoute ->
                     let
                         ( pageModel, pageCmds ) =
-                            Signup.init model.session.key
+                            Signup.init model.session
                     in
                     ( SignupPage pageModel, Cmd.map SignupPageMsg pageCmds )
 

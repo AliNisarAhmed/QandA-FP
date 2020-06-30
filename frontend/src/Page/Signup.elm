@@ -5,6 +5,7 @@ import Element as E exposing (Attribute, Element)
 import Element.Input as Input
 import Http
 import Json exposing (encodeSignupForm)
+import Session exposing (Session)
 import Styles
 import Utils exposing (displayErrorText, errorToString)
 
@@ -14,7 +15,7 @@ explain =
 
 
 type alias Model =
-    { key : Nav.Key
+    { session : Session
     , form : Form
     , error : Maybe String
     }
@@ -50,9 +51,18 @@ type Msg
     | ServerResponse (Result Http.Error ())
 
 
-init : Nav.Key -> ( Model, Cmd Msg )
-init key =
-    ( { key = key, form = initialForm, error = Nothing }, Cmd.none )
+init : Session -> ( Model, Cmd Msg )
+init s =
+    let
+        cmd =
+            case s.currentUser of
+                Nothing ->
+                    Cmd.none
+
+                Just _ ->
+                    Nav.pushUrl s.key "/"
+    in
+    ( { session = s, form = initialForm, error = Nothing }, cmd )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -83,7 +93,7 @@ update msg ({ form } as model) =
             ( { model | error = Just <| errorToString e }, Cmd.none )
 
         ServerResponse (Ok _) ->
-            ( model, Nav.pushUrl model.key "/login" )
+            ( model, Nav.pushUrl model.session.key "/login" )
 
 
 
