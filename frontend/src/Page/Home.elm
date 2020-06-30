@@ -12,7 +12,7 @@ import RemoteData exposing (RemoteData(..), WebData)
 import Route
 import Session exposing (Session)
 import Styles exposing (buttonStyles)
-import Utils exposing (displayTime, errorToString)
+import Utils exposing (displayTime, errorToString, hideElement)
 
 
 explain =
@@ -63,20 +63,22 @@ view model =
             E.row [ E.centerX, E.centerY ] <| [ E.text <| errorToString e ]
 
         Success q ->
-            page q
+            page q model.session
 
         _ ->
-            page []
+            page [] model.session
 
 
-page : List Question -> Element Msg
-page questions =
+page : List Question -> Session -> Element Msg
+page questions session =
     case questions of
         [] ->
             E.column [ E.width E.fill, E.height E.fill ] <|
                 [ E.column [ E.centerX, E.paddingXY 0 20, E.height E.fill ] <|
                     [ E.el [] <| E.text "No Questions asked so far..."
-                    , E.el [ E.height E.fill, E.centerY ] <| askQuestionButton [ E.centerY ]
+                    , E.el [ E.height E.fill, E.centerY ] <|
+                        hideElement session <|
+                            askQuestionButton [ E.centerY ]
                     ]
                 ]
 
@@ -85,7 +87,7 @@ page questions =
                 [ E.column [ E.centerX, E.paddingXY 0 20 ] <|
                     [ E.row [ E.width E.fill ]
                         [ E.el [ Font.bold ] <| E.text "Unanswered Questions"
-                        , askQuestionButton [ E.alignRight ]
+                        , hideElement session <| askQuestionButton [ E.alignRight ]
                         ]
                     ]
                         ++ List.map displayQuestion questions
