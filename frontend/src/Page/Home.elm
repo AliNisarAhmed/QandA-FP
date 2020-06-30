@@ -2,61 +2,51 @@ module Page.Home exposing (Model, Msg(..), init, update, view)
 
 import Browser.Navigation as Nav
 import Colors
-import Element as E exposing (Element)
+import Element as E exposing (Attribute, Element)
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Http
 import Json exposing (Question, questionIdToString, questionListDecoder)
+import RemoteData exposing (RemoteData(..), WebData)
 import Route
 import Styles exposing (buttonStyles)
-import Utils exposing (displayTime)
+import Utils exposing (displayTime, errorToString)
 
 
-serverUrl : String
-serverUrl =
-    "http://localhost:5000/api"
-
-
-type Status
-    = Loading
-    | Loaded
-    | Error String
+explain =
+    E.explain Debug.todo
 
 
 type alias Model =
     { key : Nav.Key
-    , questions : List Question
-    , status : Status
+    , questions : WebData (List Question)
     }
 
 
 type Msg
-    = GotQuestions (Result Http.Error (List Question))
+    = GotQuestions (WebData (List Question))
     | GoToAskAQuestionPage
 
 
 init : Nav.Key -> ( Model, Cmd Msg )
 init key =
-    ( { key = key, questions = [], status = Loading }, getData )
+    ( { key = key, questions = Loading }, getData )
 
 
 getData : Cmd Msg
 getData =
     Http.get
-        { url = serverUrl ++ "/questions"
-        , expect = Http.expectJson GotQuestions questionListDecoder
+        { url = "/api/questions"
+        , expect = Http.expectJson (RemoteData.fromResult >> GotQuestions) questionListDecoder
         }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        GotQuestions (Err error) ->
-            ( model, Cmd.none )
-
-        GotQuestions (Ok res) ->
-            ( { model | questions = res, status = Loaded }, Cmd.none )
+        GotQuestions res ->
+            ( { model | questions = res }, Cmd.none )
 
         GoToAskAQuestionPage ->
             ( model, Route.pushUrl Route.AskQuestionRoute model.key )
@@ -64,33 +54,50 @@ update msg model =
 
 view : Model -> Element Msg
 view model =
-    case model.status of
+    case model.questions of
         Loading ->
             E.row [ E.centerX, E.centerY ] <| [ E.text "Loading..." ]
 
-        Loaded ->
-            page model
+        Failure e ->
+            E.row [ E.centerX, E.centerY ] <| [ E.text <| errorToString e ]
 
-        Error error ->
-            E.text "Error"
+        Success q ->
+            page q
+
+        _ ->
+            page []
 
 
-page : Model -> Element Msg
-page model =
-    E.column [ E.width E.fill ] <|
-        [ E.column [ E.centerX, E.paddingXY 0 20 ] <|
-            [ E.row [ E.width E.fill ]
-                [ E.el [ Font.bold ] <| E.text "Unanswered Questions"
-                , Input.button
-                    (buttonStyles
-                        ++ [ E.alignRight
-                           ]
-                    )
-                    { onPress = Just GoToAskAQuestionPage, label = E.text "Ask a question" }
+page : List Question -> Element Msg
+page questions =
+    case questions of
+        [] ->
+            E.column [ E.width E.fill, E.height E.fill ] <|
+                [ E.column [ E.centerX, E.paddingXY 0 20, E.height E.fill ] <|
+                    [ E.el [] <| E.text "No Questions asked so far..."
+                    , E.el [ E.height E.fill, E.centerY ] <| askQuestionButton [ E.centerY ]
+                    ]
                 ]
-            ]
-                ++ List.map displayQuestion model.questions
-        ]
+
+        _ ->
+            E.column [ E.width E.fill ] <|
+                [ E.column [ E.centerX, E.paddingXY 0 20 ] <|
+                    [ E.row [ E.width E.fill ]
+                        [ E.el [ Font.bold ] <| E.text "Unanswered Questions"
+                        , askQuestionButton [ E.alignRight ]
+                        ]
+                    ]
+                        ++ List.map displayQuestion questions
+                ]
+
+
+askQuestionButton : List (Attribute Msg) -> Element Msg
+askQuestionButton styles =
+    Input.button
+        (buttonStyles
+            ++ styles
+        )
+        { onPress = Just GoToAskAQuestionPage, label = E.text "Ask a question" }
 
 
 displayQuestion : Question -> Element Msg
@@ -103,7 +110,7 @@ displayQuestion q =
     <|
         E.column [ E.width <| E.px 700 ]
             [ E.link [ Font.bold ] <|
-                { url = "questions/" ++ questionIdToString q.id
+                { url = "/api/questions/" ++ questionIdToString q.id
                 , label = E.text q.title
                 }
             , E.row [ E.alignLeft ]

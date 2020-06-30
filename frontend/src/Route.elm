@@ -11,6 +11,8 @@ type Route
     | HomePageRoute
     | AskQuestionRoute
     | QuestionDetailsRoute QuestionId
+    | SignupRoute
+    | LoginRoute
 
 
 pushUrl : Route -> Nav.Key -> Cmd msg
@@ -27,6 +29,12 @@ routeToString route =
 
         AskQuestionRoute ->
             "/ask"
+
+        SignupRoute ->
+            "/signup"
+
+        LoginRoute ->
+            "/login"
 
         QuestionDetailsRoute questionId ->
             "/questions/" ++ questionIdToString questionId
@@ -46,6 +54,8 @@ matchRoute =
     UP.oneOf
         [ UP.map HomePageRoute UP.top
         , UP.map AskQuestionRoute (UP.s "ask")
+        , UP.map SignupRoute (UP.s "signup")
+        , UP.map LoginRoute (UP.s "login")
         , UP.map QuestionDetailsRoute (UP.s "questions" </> questionIdParser)
         ]
 

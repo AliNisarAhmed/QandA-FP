@@ -14,7 +14,7 @@ import Json
         )
 import RemoteData as RemoteData exposing (RemoteData(..), WebData)
 import Styles
-import Utils exposing (displayTime)
+import Utils exposing (displayTime, errorToString)
 
 
 serverUrl : String
@@ -171,22 +171,3 @@ displayAnswer answer =
         [ E.row Styles.contentStyles [ E.text answer.content ]
         , E.row Styles.subTextStyles [ E.text <| "Answered on " ++ displayTime answer.created ]
         ]
-
-
-errorToString : Http.Error -> String
-errorToString err =
-    case err of
-        Http.BadBody str ->
-            str
-
-        Http.Timeout ->
-            "Time out"
-
-        Http.BadUrl str ->
-            str
-
-        Http.BadStatus int ->
-            "bad status: " ++ String.fromInt int
-
-        Http.NetworkError ->
-            "Network Error"

@@ -1,5 +1,6 @@
 {-# LANGUAGE TypeOperators #-}
 
+
 module Server
   ( server
   , API
@@ -14,9 +15,16 @@ import           API.QuestionAPI                ( questionServer
 import           API.AnswerAPI                  ( answerServer
                                                 , AnswerApi
                                                 )
+import           API.AuthAPI                    ( authServer
+                                                , AuthApi
+                                                )
 import           Config                         ( App(..) )
+import           GHC.Generics                   ( Generic )
+import qualified Servant.Auth.Server           as SAS
 
-type API = QuestionApi :<|> AnswerApi
 
-server :: ServerT API App
-server = questionServer :<|> answerServer
+type API = QuestionApi :<|> AnswerApi :<|> AuthApi
+
+server :: SAS.CookieSettings -> SAS.JWTSettings -> ServerT API App
+server cs jwts = questionServer :<|> answerServer :<|> (authServer cs jwts)
+

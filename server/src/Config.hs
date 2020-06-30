@@ -16,7 +16,6 @@ import           Database.Persist.Postgresql    ( ConnectionPool
 import           Servant.Server                 ( Handler
                                                 , ServerError
                                                 )
-
 -- | This type represents the effects we want to have for our application.
 -- We wrap the standard Servant monad with 'ReaderT Config', which gives us
 -- access to the application configuration using the 'MonadReader'
@@ -36,6 +35,7 @@ type App = AppT (IO ())
 
 -- | The Config for our application is (for now) the 'Environment' we're
 -- running in and a Persistent 'ConnectionPool'.
-newtype Config
+data Config
     = Config
-    { configPool      :: ConnectionPool }
+    { configPool      :: ConnectionPool
+    }

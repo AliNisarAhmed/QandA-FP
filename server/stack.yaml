@@ -41,6 +41,7 @@ packages:
 #
 extra-deps:
 - servant-options-0.1.0.0@sha256:39f50166a68006250e79370372f553ca476f14d06d93fa0c401050253aeba803,914
+- pwstore-fast-2.4.4@sha256:9b6a37510d8b9f37f409a8ab3babac9181afcaaa3fce8ba1c131a7ed3de30698,1351
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

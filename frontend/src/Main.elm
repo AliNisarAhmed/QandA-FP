@@ -2,14 +2,14 @@ module Main exposing (..)
 
 import Browser exposing (Document, UrlRequest)
 import Browser.Navigation as Nav
-import Colors
 import Element as E exposing (Attribute, Element)
-import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input exposing (search)
 import Page.AskQuestion as AskQuestion exposing (Msg(..))
 import Page.Home as Home exposing (Msg(..))
+import Page.Login as Login
 import Page.QuestionDetails as QuestionDetails
+import Page.Signup as Signup
 import Route exposing (Route(..))
 import Styles
 import Url
@@ -36,6 +36,8 @@ type Page
     | HomePage Home.Model
     | AskQuestionPage AskQuestion.Model
     | QuestionDetailsPage QuestionDetails.Model
+    | SignupPage Signup.Model
+    | LoginPage Login.Model
     | NotFoundPage
 
 
@@ -46,6 +48,8 @@ type Msg
     | HomePageMsg Home.Msg
     | AskQuestionMsg AskQuestion.Msg
     | QuestionDetailsPageMsg QuestionDetails.Msg
+    | LoginPageMsg Login.Msg
+    | SignupPageMsg Signup.Msg
 
 
 
@@ -104,6 +108,20 @@ initCurrentPage ( model, currentCommands ) =
                             QuestionDetails.init model.key questionId
                     in
                     ( QuestionDetailsPage pageModel, Cmd.map QuestionDetailsPageMsg pageCmds )
+
+                Route.SignupRoute ->
+                    let
+                        ( pageModel, pageCmds ) =
+                            Signup.init model.key
+                    in
+                    ( SignupPage pageModel, Cmd.map SignupPageMsg pageCmds )
+
+                Route.LoginRoute ->
+                    let
+                        ( pageModel, pageCmds ) =
+                            Login.init model.key
+                    in
+                    ( LoginPage pageModel, Cmd.map LoginPageMsg pageCmds )
 
                 _ ->
                     ( NotFoundPage, Cmd.none )
@@ -165,6 +183,24 @@ update msg model =
             , Cmd.map QuestionDetailsPageMsg updatedCmds
             )
 
+        ( SignupPageMsg pageMsg, SignupPage pageModel ) ->
+            let
+                ( updatedPageModel, updatedCmds ) =
+                    Signup.update pageMsg pageModel
+            in
+            ( { model | currentPage = SignupPage updatedPageModel }
+            , Cmd.map SignupPageMsg updatedCmds
+            )
+
+        ( LoginPageMsg pageMsg, LoginPage pageModel ) ->
+            let
+                ( updatedModel, updatedCmds ) =
+                    Login.update pageMsg pageModel
+            in
+            ( { model | currentPage = LoginPage updatedModel }
+            , Cmd.map LoginPageMsg updatedCmds
+            )
+
         ( _, _ ) ->
             ( model, Cmd.none )
 
@@ -192,6 +228,12 @@ view model =
 
                 QuestionDetailsPage pageModel ->
                     ( "Question Details", QuestionDetails.view pageModel |> E.map QuestionDetailsPageMsg )
+
+                SignupPage pageModel ->
+                    ( "Sign Up", Signup.view pageModel |> E.map SignupPageMsg )
+
+                LoginPage pageModel ->
+                    ( "Log In", Login.view pageModel |> E.map LoginPageMsg )
     in
     { title = title
     , body =
@@ -210,7 +252,8 @@ navbar model =
         Styles.navbarStyles
         [ E.link [] { url = "/", label = E.el [ Font.bold, Font.size 20 ] <| E.text "Q & A" }
         , searchBar model
-        , E.el [] <| E.text "Sign In"
+        , E.link [] { url = "/login", label = E.text <| "Log In" }
+        , E.link [] { url = "/signup", label = E.text <| "Sign up" }
         ]
 
 

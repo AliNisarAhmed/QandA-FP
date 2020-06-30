@@ -39,6 +39,9 @@ dependencies:
 - bytestring
 - esqueleto
 - safe
+- servant-auth
+- servant-auth-server
+- pwstore-fast
 
 library:
   source-dirs: src
