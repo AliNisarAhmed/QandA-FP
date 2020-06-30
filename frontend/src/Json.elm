@@ -3,6 +3,7 @@ module Json exposing (..)
 import Json.Decode as Decode exposing (Decoder, int, list, string)
 import Json.Decode.Pipeline exposing (required)
 import Json.Encode as Encode
+import Session exposing (CurrentUser)
 
 
 
@@ -56,12 +57,6 @@ currentUserDecoder =
             |> required "firstName" string
             |> required "lastName" string
         )
-
-
-type alias CurrentUser =
-    { firstName : String
-    , lastName : String
-    }
 
 
 questionWithAnswersDecoder : Decoder (Maybe QuestionWithAnswers)

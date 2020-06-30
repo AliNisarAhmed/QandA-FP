@@ -13,6 +13,7 @@ import Json
         , questionWithAnswersDecoder
         )
 import RemoteData as RemoteData exposing (RemoteData(..), WebData)
+import Session exposing (Session)
 import Styles
 import Utils exposing (displayTime, errorToString)
 
@@ -29,7 +30,7 @@ explain =
 type alias Model =
     { question : WebData (Maybe QuestionWithAnswers)
     , questionId : QuestionId
-    , key : Nav.Key
+    , session : Session
     , error : Maybe String
     , answer : String
     }
@@ -43,10 +44,10 @@ type Msg
     | Submitted (Result Http.Error ())
 
 
-init : Nav.Key -> QuestionId -> ( Model, Cmd Msg )
-init key questionId =
+init : Session -> QuestionId -> ( Model, Cmd Msg )
+init s questionId =
     ( { question = Loading
-      , key = key
+      , session = s
       , questionId = questionId
       , error = Nothing
       , answer = ""

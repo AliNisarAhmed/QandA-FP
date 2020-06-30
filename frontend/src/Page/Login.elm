@@ -4,9 +4,10 @@ import Browser.Navigation as Nav
 import Element as E exposing (Attribute, Element)
 import Element.Input as Input
 import Http
-import Json exposing (CurrentUser, currentUserDecoder, encodeLoginForm)
+import Json exposing (currentUserDecoder, encodeLoginForm)
 import Page.Signup exposing (Msg(..))
 import RemoteData exposing (RemoteData(..), WebData)
+import Session exposing (CurrentUser)
 import Styles
 import Utils exposing (displayErrorText, errorToString)
 

@@ -9,6 +9,7 @@ import Element.Input as Input
 import Http
 import Json exposing (encodeQuestion)
 import Route
+import Session exposing (Session)
 import Styles exposing (buttonStyles)
 
 
@@ -21,7 +22,7 @@ explain =
 
 
 type alias Model =
-    { key : Nav.Key
+    { session : Session
     , title : String
     , content : String
     , error : Maybe Http.Error
@@ -35,9 +36,9 @@ type Msg
     | SubmitSucces (Result Http.Error ())
 
 
-init : Nav.Key -> ( Model, Cmd Msg )
-init k =
-    ( { key = k, title = "", content = "", error = Nothing }, Cmd.none )
+init : Session -> ( Model, Cmd Msg )
+init s =
+    ( { session = s, title = "", content = "", error = Nothing }, Cmd.none )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -55,8 +56,8 @@ update msg model =
         SubmitSucces (Err err) ->
             ( { model | error = Just err }, Cmd.none )
 
-        SubmitSucces (Ok res) ->
-            ( model, Route.pushUrl Route.HomePageRoute model.key )
+        SubmitSucces (Ok _) ->
+            ( model, Route.pushUrl Route.HomePageRoute model.session.key )
 
 
 

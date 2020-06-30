@@ -6,13 +6,14 @@ import Element as E exposing (Attribute, Element)
 import Element.Font as Font
 import Element.Input as Input exposing (search)
 import Http
-import Json exposing (CurrentUser, currentUserDecoder)
+import Json exposing (currentUserDecoder)
 import Page.AskQuestion as AskQuestion exposing (Msg(..))
 import Page.Home as Home exposing (Msg(..))
 import Page.Login as Login
 import Page.QuestionDetails as QuestionDetails
 import Page.Signup as Signup
 import Route exposing (Route(..))
+import Session exposing (CurrentUser, Session)
 import Styles
 import Url
 
@@ -57,19 +58,12 @@ type Msg
     | SignupPageMsg Signup.Msg
 
 
-type alias Session =
-    { key : Nav.Key
-    , currentUser : Maybe CurrentUser
-    }
-
-
 
 ---- MODEL ----
 
 
 type alias Model =
-    { key : Nav.Key
-    , search : String
+    { search : String
     , route : Route
     , currentPage : Page
     , session : Session
@@ -78,8 +72,7 @@ type alias Model =
 
 initialModel : Nav.Key -> Url.Url -> Model
 initialModel key url =
-    { key = key
-    , route = Route.parseUrl url
+    { route = Route.parseUrl url
     , search = ""
     , currentPage = LandingPage
     , session = { key = key, currentUser = Nothing }
@@ -105,35 +98,35 @@ initCurrentPage ( model, currentCommands ) =
                 Route.HomePageRoute ->
                     let
                         ( pageModel, pageCmds ) =
-                            Home.init model.key
+                            Home.init model.session
                     in
                     ( HomePage pageModel, Cmd.map HomePageMsg pageCmds )
 
                 Route.AskQuestionRoute ->
                     let
                         ( pageModel, pageCmds ) =
-                            AskQuestion.init model.key
+                            AskQuestion.init model.session
                     in
                     ( AskQuestionPage pageModel, Cmd.map AskQuestionMsg pageCmds )
 
                 Route.QuestionDetailsRoute questionId ->
                     let
                         ( pageModel, pageCmds ) =
-                            QuestionDetails.init model.key questionId
+                            QuestionDetails.init model.session questionId
                     in
                     ( QuestionDetailsPage pageModel, Cmd.map QuestionDetailsPageMsg pageCmds )
 
                 Route.SignupRoute ->
                     let
                         ( pageModel, pageCmds ) =
-                            Signup.init model.key
+                            Signup.init model.session.key
                     in
                     ( SignupPage pageModel, Cmd.map SignupPageMsg pageCmds )
 
                 Route.LoginRoute ->
                     let
                         ( pageModel, pageCmds ) =
-                            Login.init model.key
+                            Login.init model.session.key
                     in
                     ( LoginPage pageModel, Cmd.map LoginPageMsg pageCmds )
 
@@ -158,7 +151,7 @@ update msg ({ session } as model) =
                     ( model, Nav.load href )
 
                 Browser.Internal url ->
-                    ( model, Nav.pushUrl model.key (Url.toString url) )
+                    ( model, Nav.pushUrl model.session.key (Url.toString url) )
 
         ( UrlChanged url, _ ) ->
             let

@@ -10,6 +10,7 @@ import Http
 import Json exposing (Question, questionIdToString, questionListDecoder)
 import RemoteData exposing (RemoteData(..), WebData)
 import Route
+import Session exposing (Session)
 import Styles exposing (buttonStyles)
 import Utils exposing (displayTime, errorToString)
 
@@ -19,7 +20,7 @@ explain =
 
 
 type alias Model =
-    { key : Nav.Key
+    { session : Session
     , questions : WebData (List Question)
     }
 
@@ -29,9 +30,9 @@ type Msg
     | GoToAskAQuestionPage
 
 
-init : Nav.Key -> ( Model, Cmd Msg )
-init key =
-    ( { key = key, questions = Loading }, getData )
+init : Session -> ( Model, Cmd Msg )
+init session =
+    ( { session = session, questions = Loading }, getData )
 
 
 getData : Cmd Msg
@@ -49,7 +50,7 @@ update msg model =
             ( { model | questions = res }, Cmd.none )
 
         GoToAskAQuestionPage ->
-            ( model, Route.pushUrl Route.AskQuestionRoute model.key )
+            ( model, Route.pushUrl Route.AskQuestionRoute model.session.key )
 
 
 view : Model -> Element Msg
