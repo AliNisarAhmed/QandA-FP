@@ -4,8 +4,9 @@ import Browser.Navigation as Nav
 import Element as E exposing (Attribute, Element)
 import Element.Input as Input
 import Http
-import Json exposing (encodeLoginForm)
+import Json exposing (CurrentUser, currentUserDecoder, encodeLoginForm)
 import Page.Signup exposing (Msg(..))
+import RemoteData exposing (RemoteData(..), WebData)
 import Styles
 import Utils exposing (displayErrorText, errorToString)
 
@@ -18,6 +19,7 @@ type alias Model =
     { key : Nav.Key
     , form : LoginForm
     , error : Maybe String
+    , currentUser : WebData CurrentUser
     }
 
 
@@ -40,6 +42,10 @@ type Msg
     | OnUsernameChange String
     | OnPasswordChange String
     | ServerResponse (Result Http.Error ())
+    | FetchCurrentUser
+    | GotCurrentUser (WebData CurrentUser)
+    | LogOut
+    | LogOutResponse (Result Http.Error ())
 
 
 init : Nav.Key -> ( Model, Cmd Msg )
@@ -47,6 +53,7 @@ init key =
     ( { key = key
       , form = initialForm
       , error = Nothing
+      , currentUser = NotAsked
       }
     , Cmd.none
     )
@@ -77,6 +84,21 @@ update msg ({ form } as model) =
         ServerResponse (Ok _) ->
             ( model, Nav.pushUrl model.key "/" )
 
+        FetchCurrentUser ->
+            ( model, fetchCurrentUser )
+
+        GotCurrentUser user ->
+            ( { model | currentUser = user }, Cmd.none )
+
+        LogOut ->
+            ( model, logout )
+
+        LogOutResponse (Err e) ->
+            ( { model | error = Just <| errorToString e }, Cmd.none )
+
+        LogOutResponse (Ok _) ->
+            ( model, Nav.pushUrl model.key "/" )
+
 
 
 ---- COMMANDS ----
@@ -88,6 +110,23 @@ submitLoginForm model =
         { url = "/api/auth/login"
         , body = Http.jsonBody (encodeLoginForm model.form)
         , expect = Http.expectWhatever ServerResponse
+        }
+
+
+fetchCurrentUser : Cmd Msg
+fetchCurrentUser =
+    Http.get
+        { url = "/api/auth/current-user"
+        , expect = Http.expectJson (RemoteData.fromResult >> GotCurrentUser) currentUserDecoder
+        }
+
+
+logout : Cmd Msg
+logout =
+    Http.post
+        { url = "api/auth/logout"
+        , body = Http.emptyBody
+        , expect = Http.expectWhatever LogOutResponse
         }
 
 
@@ -121,5 +160,27 @@ view model =
                 { onPress = Just SubmitLoginForm
                 , label = E.text "Submit"
                 }
+            , Input.button Styles.buttonStyles
+                { onPress = Just FetchCurrentUser
+                , label = E.text "Fetch Current User"
+                }
+            , Input.button Styles.buttonStyles
+                { onPress = Just LogOut
+                , label = E.text "Log Out"
+                }
             , displayErrorText model.error
+            , displayCurrentUser model.currentUser
             ]
+
+
+displayCurrentUser : WebData CurrentUser -> Element Msg
+displayCurrentUser cu =
+    case cu of
+        Success currentUser ->
+            E.el [] <| E.text currentUser.firstName
+
+        Failure e ->
+            displayErrorText <| Just <| errorToString e
+
+        _ ->
+            E.none
