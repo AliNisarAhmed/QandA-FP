@@ -38,7 +38,7 @@ type AuthApi
   :<|> SAS.Auth '[SAS.Cookie, SAS.JWT] AuthenticatedUser :> LogOutApi
 
 type CurrentUserApi
-  = "api" :> "auth" :> "current-user" :> Get '[JSON] AuthenticatedUser
+  = "api" :> "auth" :> "current-user" :> Get '[JSON] (Maybe AuthenticatedUser)
 
 
 type LogOutApi
@@ -62,16 +62,16 @@ logout cs (SAS.Authenticated authUser) = return $ SAS.clearSession cs ()
 logout _ _ = throwAll err401
 
 
-currentUser :: SAS.AuthResult AuthenticatedUser -> App AuthenticatedUser
+currentUser :: SAS.AuthResult AuthenticatedUser -> App (Maybe AuthenticatedUser)
 currentUser (SAS.Authenticated authUser) = do
   _ <- liftIO $ putStrLn "Authenticated"
-  return authUser
+  return $ Just authUser
 currentUser (SAS.NoSuchUser) = do
   _ <- liftIO $ putStrLn "No Such User"
-  throwAll err401
+  return Nothing
 currentUser (SAS.Indefinite ) = do
   _ <- liftIO $ putStrLn "Indefinite"
-  throwAll err401
+  return Nothing
 currentUser (SAS.BadPassword) = do
   _ <- liftIO $ putStrLn "Bad Password"
   throwAll err401
@@ -114,19 +114,3 @@ instance ToJSON AuthenticatedUser
 instance FromJSON AuthenticatedUser
 instance ToJWT AuthenticatedUser
 instance FromJWT AuthenticatedUser
-
-
--- expiredSessionCookie :: CookieSettings -> SetCookie
--- expiredSessionCookie cs = Web.Cookie.def
---   { Web.Cookie.setCookieName = Auth.sessionCookieName cs
---   , Web.Cookie.setCookieValue = ""
---   , Web.Cookie.setCookieExpires = Just $ UTCTime (fromGregorian 2000 1 1) 0
---   , Web.Cookie.setCookiePath = Auth.cookiePath cs
---   }
-
-
--- deleteSessionCookie :: AddHeader "Set-Cookie" SetCookie
---                                          response withCookie
---                     => CookieSettings -> IO (response -> withCookie)
-
--- deleteSessionCookie cs = return $ addHeader $ expiredSessionCookie cs
