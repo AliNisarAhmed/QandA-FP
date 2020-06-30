@@ -36,9 +36,19 @@ type Msg
     | SubmitSucces (Result Http.Error ())
 
 
+initialModel : Session -> Model
+initialModel s =
+    { session = s, title = "", content = "", error = Nothing }
+
+
 init : Session -> ( Model, Cmd Msg )
 init s =
-    ( { session = s, title = "", content = "", error = Nothing }, Cmd.none )
+    case s.currentUser of
+        Nothing ->
+            ( initialModel s, Nav.pushUrl s.key "/unauthorized" )
+
+        Just _ ->
+            ( initialModel s, Cmd.none )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

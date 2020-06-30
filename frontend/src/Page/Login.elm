@@ -7,7 +7,7 @@ import Http
 import Json exposing (currentUserDecoder, encodeLoginForm)
 import Page.Signup exposing (Msg(..))
 import RemoteData exposing (RemoteData(..), WebData)
-import Session exposing (CurrentUser)
+import Session exposing (CurrentUser, Session)
 import Styles
 import Utils exposing (displayErrorText, errorToString)
 
@@ -17,7 +17,7 @@ import Utils exposing (displayErrorText, errorToString)
 
 
 type alias Model =
-    { key : Nav.Key
+    { session : Session
     , form : LoginForm
     , error : Maybe String
     , currentUser : Maybe CurrentUser
@@ -45,15 +45,27 @@ type Msg
     | GotCurrentUser (WebData (Maybe CurrentUser))
 
 
-init : Nav.Key -> ( Model, Cmd Msg )
-init key =
-    ( { key = key
-      , form = initialForm
-      , error = Nothing
-      , currentUser = Nothing
-      }
-    , Cmd.none
-    )
+initialModel : Session -> Model
+initialModel s =
+    { session = s
+    , form = initialForm
+    , error = Nothing
+    , currentUser = Nothing
+    }
+
+
+init : Session -> ( Model, Cmd Msg )
+init s =
+    case s.currentUser of
+        Nothing ->
+            ( initialModel s
+            , Cmd.none
+            )
+
+        Just _ ->
+            ( initialModel s
+            , Nav.pushUrl s.key "/"
+            )
 
 
 
@@ -77,7 +89,7 @@ update msg ({ form } as model) =
 
         GotCurrentUser user ->
             ( { model | currentUser = RemoteData.withDefault Nothing user }
-            , Nav.pushUrl model.key "/"
+            , Nav.pushUrl model.session.key "/"
             )
 
 

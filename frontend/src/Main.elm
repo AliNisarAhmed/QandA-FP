@@ -12,6 +12,7 @@ import Page.Home as Home exposing (Msg(..))
 import Page.Login as Login
 import Page.QuestionDetails as QuestionDetails
 import Page.Signup as Signup
+import Page.UnAuthorized as UnAuthorized
 import Route exposing (Route(..))
 import Session exposing (CurrentUser, Session)
 import Styles
@@ -41,6 +42,7 @@ type Page
     | QuestionDetailsPage QuestionDetails.Model
     | SignupPage Signup.Model
     | LoginPage Login.Model
+    | UnAuthorizedPage
     | NotFoundPage
 
 
@@ -56,6 +58,7 @@ type Msg
     | QuestionDetailsPageMsg QuestionDetails.Msg
     | LoginPageMsg Login.Msg
     | SignupPageMsg Signup.Msg
+    | UnAuthorizedPageMsg UnAuthorized.Msg
 
 
 
@@ -126,9 +129,12 @@ initCurrentPage ( model, currentCommands ) =
                 Route.LoginRoute ->
                     let
                         ( pageModel, pageCmds ) =
-                            Login.init model.session.key
+                            Login.init model.session
                     in
                     ( LoginPage pageModel, Cmd.map LoginPageMsg pageCmds )
+
+                Route.UnAuthorizedRoute ->
+                    ( UnAuthorizedPage, Cmd.none )
 
                 _ ->
                     ( NotFoundPage, Cmd.none )
@@ -285,6 +291,9 @@ view model =
 
                 LoginPage pageModel ->
                     ( "Log In", Login.view pageModel |> E.map LoginPageMsg )
+
+                UnAuthorizedPage ->
+                    ( "UnAuthorized", UnAuthorized.view |> E.map UnAuthorizedPageMsg )
     in
     { title = title
     , body =

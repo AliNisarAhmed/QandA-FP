@@ -8,6 +8,7 @@ import Url.Parser as UP exposing ((</>))
 
 type Route
     = NotFoundRoute
+    | UnAuthorizedRoute
     | HomePageRoute
     | AskQuestionRoute
     | QuestionDetailsRoute QuestionId
@@ -39,6 +40,9 @@ routeToString route =
         QuestionDetailsRoute questionId ->
             "/questions/" ++ questionIdToString questionId
 
+        UnAuthorizedRoute ->
+            "/unauthorized"
+
         NotFoundRoute ->
             "/404"
 
@@ -57,6 +61,7 @@ matchRoute =
         , UP.map SignupRoute (UP.s "signup")
         , UP.map LoginRoute (UP.s "login")
         , UP.map QuestionDetailsRoute (UP.s "questions" </> questionIdParser)
+        , UP.map UnAuthorizedRoute (UP.s "unauthorized")
         ]
 
 
