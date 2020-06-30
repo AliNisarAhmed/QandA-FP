@@ -5,6 +5,8 @@ import Browser.Navigation as Nav
 import Element as E exposing (Attribute, Element)
 import Element.Font as Font
 import Element.Input as Input exposing (search)
+import Http
+import Json exposing (CurrentUser, currentUserDecoder)
 import Page.AskQuestion as AskQuestion exposing (Msg(..))
 import Page.Home as Home exposing (Msg(..))
 import Page.Login as Login
@@ -44,12 +46,21 @@ type Page
 type Msg
     = LinkClicked UrlRequest
     | UrlChanged Url.Url
+    | GotCurrentUser (Result Http.Error (Maybe CurrentUser))
+    | LogOut
+    | LogOutResponse (Result Http.Error ())
     | OnSearchChange String
     | HomePageMsg Home.Msg
     | AskQuestionMsg AskQuestion.Msg
     | QuestionDetailsPageMsg QuestionDetails.Msg
     | LoginPageMsg Login.Msg
     | SignupPageMsg Signup.Msg
+
+
+type alias Session =
+    { key : Nav.Key
+    , currentUser : Maybe CurrentUser
+    }
 
 
 
@@ -61,20 +72,23 @@ type alias Model =
     , search : String
     , route : Route
     , currentPage : Page
+    , session : Session
+    }
+
+
+initialModel : Nav.Key -> Url.Url -> Model
+initialModel key url =
+    { key = key
+    , route = Route.parseUrl url
+    , search = ""
+    , currentPage = LandingPage
+    , session = { key = key, currentUser = Nothing }
     }
 
 
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
-    let
-        model =
-            { key = key
-            , route = Route.parseUrl url
-            , search = ""
-            , currentPage = LandingPage
-            }
-    in
-    initCurrentPage ( model, Cmd.none )
+    ( initialModel key url, fetchCurrentUser )
 
 
 
@@ -136,7 +150,7 @@ initCurrentPage ( model, currentCommands ) =
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update msg ({ session } as model) =
     case ( msg, model.currentPage ) of
         ( LinkClicked urlRequest, _ ) ->
             case urlRequest of
@@ -197,12 +211,56 @@ update msg model =
                 ( updatedModel, updatedCmds ) =
                     Login.update pageMsg pageModel
             in
-            ( { model | currentPage = LoginPage updatedModel }
+            ( { model
+                | currentPage = LoginPage updatedModel
+                , session = { session | currentUser = updatedModel.currentUser }
+              }
             , Cmd.map LoginPageMsg updatedCmds
             )
 
+        ( GotCurrentUser (Ok mu), _ ) ->
+            case mu of
+                Nothing ->
+                    initCurrentPage ( model, Cmd.none )
+
+                Just user ->
+                    initCurrentPage
+                        ( { model | session = { session | currentUser = Just user } }
+                        , Cmd.none
+                        )
+
+        ( GotCurrentUser (Err e), _ ) ->
+            initCurrentPage ( model, Cmd.none )
+
+        ( LogOut, _ ) ->
+            ( model, logout )
+
+        ( LogOutResponse _, _ ) ->
+            initCurrentPage ( model, Nav.load "/" )
+
         ( _, _ ) ->
             ( model, Cmd.none )
+
+
+
+---- COMMANDS ----
+
+
+logout : Cmd Msg
+logout =
+    Http.post
+        { url = "api/auth/logout"
+        , body = Http.emptyBody
+        , expect = Http.expectWhatever LogOutResponse
+        }
+
+
+fetchCurrentUser : Cmd Msg
+fetchCurrentUser =
+    Http.get
+        { url = "/api/auth/current-user"
+        , expect = Http.expectJson GotCurrentUser currentUserDecoder
+        }
 
 
 
@@ -247,14 +305,25 @@ view model =
 
 
 navbar : Model -> Element Msg
-navbar model =
-    E.row
-        Styles.navbarStyles
-        [ E.link [] { url = "/", label = E.el [ Font.bold, Font.size 20 ] <| E.text "Q & A" }
-        , searchBar model
-        , E.link [] { url = "/login", label = E.text <| "Log In" }
-        , E.link [] { url = "/signup", label = E.text <| "Sign up" }
-        ]
+navbar ({ session } as model) =
+    case session.currentUser of
+        Nothing ->
+            E.row
+                Styles.navbarStyles
+                [ E.link [] { url = "/", label = E.el [ Font.bold, Font.size 20 ] <| E.text "Q & A" }
+                , searchBar model
+                , E.link [] { url = "/login", label = E.text <| "Log In" }
+                , E.link [] { url = "/signup", label = E.text <| "Sign up" }
+                ]
+
+        Just cu ->
+            E.row
+                Styles.navbarStyles
+                [ E.link [] { url = "/", label = E.el [ Font.bold, Font.size 20 ] <| E.text "Q & A" }
+                , searchBar model
+                , E.el [] <| E.text <| "Howdy " ++ cu.firstName
+                , Input.button [] { onPress = Just LogOut, label = E.text "Log Out" }
+                ]
 
 
 searchBar : Model -> Element Msg

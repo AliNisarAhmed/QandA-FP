@@ -49,11 +49,13 @@ encodeQuestion { content, title } =
 ---- Decoders ----
 
 
-currentUserDecoder : Decoder CurrentUser
+currentUserDecoder : Decoder (Maybe CurrentUser)
 currentUserDecoder =
-    Decode.succeed CurrentUser
-        |> required "firstName" string
-        |> required "lastName" string
+    nullableDecoder
+        (Decode.succeed CurrentUser
+            |> required "firstName" string
+            |> required "lastName" string
+        )
 
 
 type alias CurrentUser =
