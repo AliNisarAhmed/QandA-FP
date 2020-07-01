@@ -94,8 +94,8 @@ login cookieSettings jwtSettings form = do
   case mu of
     Nothing ->
       throwError err401
-    Just user -> do
-      let aUser = AUser (M.userFirstName user) (M.userLastName user)
+    Just (id, user) -> do
+      let aUser = AUser id (M.userFirstName user) (M.userLastName user)
       mApplyCookies <- liftIO $ SAS.acceptLogin cookieSettings jwtSettings aUser
       case mApplyCookies of
         Nothing ->
@@ -105,7 +105,8 @@ login cookieSettings jwtSettings form = do
 
 
 data AuthenticatedUser = AUser
-  { firstName :: Text
+  { id :: M.Key M.User
+  , firstName :: Text
   , lastName :: Text
   } deriving (Show, Generic)
 

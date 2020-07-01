@@ -4,7 +4,9 @@ module API.DbQueries where
 import           Database                       ( runDb
                                                 , DbQuery
                                                 )
-import           Database.Persist               ( Entity )
+import           Database.Persist               ( Entity(..)
+                                                , Key(..)
+                                                )
 import qualified Database.Persist              as P
 
 import           Database.Esqueleto             ( select
@@ -129,14 +131,14 @@ saveUser fn ln em pw = do
   insert_ $ User fn ln em password
 
 
-validateLoginForm :: LoginForm -> DbQuery (Maybe User)
+validateLoginForm :: LoginForm -> DbQuery (Maybe (Key User, User))
 validateLoginForm (LoginForm username pwd) = do
   mu <- getBy $ UniqueUserName username
   case mu of
     Nothing -> return Nothing
-    Just entityUser ->
-      if PS.verifyPassword (encodeUtf8 pwd) (userPwd (entityVal entityUser))
-        then return $ Just $ entityVal entityUser
+    Just (Entity k user) ->
+      if PS.verifyPassword (encodeUtf8 pwd) (userPwd user)
+        then return $ Just (k, user)
         else return Nothing
 
 
