@@ -208,9 +208,7 @@ answerBox =
 displayAnswer : Session -> Answer -> Element Msg
 displayAnswer session answer =
     E.column Styles.answerDisplay
-        [ E.row Styles.contentStyles
-            [ E.text answer.content
-            ]
+        [ E.paragraph Styles.contentStyles [ E.text answer.content ]
         , E.row Styles.subTextStyles
             [ E.el [] <| E.text <| "Answered on " ++ displayTime answer.created
             , Input.button [ E.alignRight ]
