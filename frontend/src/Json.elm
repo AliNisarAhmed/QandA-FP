@@ -3,7 +3,7 @@ module Json exposing (..)
 import Json.Decode as Decode exposing (Decoder, int, list, string)
 import Json.Decode.Pipeline exposing (required)
 import Json.Encode as Encode
-import Session exposing (CurrentUser)
+import Session exposing (CurrentUser, Session)
 
 
 
@@ -37,13 +37,22 @@ encodeAnswer str =
         ]
 
 
-encodeQuestion : { r | content : String, title : String } -> Encode.Value
-encodeQuestion { content, title } =
-    Encode.object
-        [ ( "title", Encode.string title )
-        , ( "content", Encode.string content )
-        , ( "userId", Encode.int 1 )
-        ]
+encodeQuestion : { r | content : String, title : String, session : Session } -> Encode.Value
+encodeQuestion { content, title, session } =
+    case session.currentUser of
+        Nothing ->
+            Encode.object
+                [ ( "title", Encode.string title )
+                , ( "content", Encode.string content )
+                , ( "userId", Encode.null )
+                ]
+
+        Just cu ->
+            Encode.object
+                [ ( "title", Encode.string title )
+                , ( "content", Encode.string content )
+                , ( "userId", Encode.int cu.id )
+                ]
 
 
 

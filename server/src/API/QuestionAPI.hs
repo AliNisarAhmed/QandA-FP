@@ -18,6 +18,8 @@ import Data.Aeson (FromJSON, ToJSON)
 import Data.Maybe (fromMaybe)
 import API.DbQueries ((!??), getQuestions, insertQuestion, checkQuestion, updateQuestion, deleteQuestionById, getQuestionWithAnswers)
 import API.Requests
+import qualified Servant.Auth.Server as SAS
+import API.AuthAPI (AuthenticatedUser)
 
 type QuestionApi =
     "api" :> "questions" :>
@@ -26,9 +28,13 @@ type QuestionApi =
         :<|>
           Capture "questionId" (Key Question) :> Get '[JSON] (Maybe QuestionWithAnswers)
         :<|>
-          ReqBody '[JSON] CreateQuestionRequest :> Post '[JSON] (Entity Question)
+          SAS.Auth '[SAS.Cookie, SAS.JWT] AuthenticatedUser
+            :> ReqBody '[JSON] CreateQuestionRequest
+            :> Post '[JSON] (Entity Question)
         :<|>
-          Capture "questionId" (Key Question) :> ReqBody '[JSON] UpdateQuestionRequest :> Put '[JSON] Question
+          Capture "questionId" (Key Question)
+            :> ReqBody '[JSON] UpdateQuestionRequest
+            :> Put '[JSON] Question
         :<|>
           Capture "questionId" (Key Question) :> Delete '[JSON] ()
       )
@@ -48,11 +54,11 @@ getQuestion :: Key Question -> App (Maybe QuestionWithAnswers)
 getQuestion = runDb . getQuestionWithAnswers
 
 
-postQuestion :: CreateQuestionRequest -> App (Entity Question)
-postQuestion CreateQuestionRequest {..} = do
+postQuestion :: SAS.AuthResult AuthenticatedUser -> CreateQuestionRequest -> App (Entity Question)
+postQuestion (SAS.Authenticated user) CreateQuestionRequest {..} = do
   now <- liftIO getCurrentTime
   runDb $ insertQuestion (Question title content now userId)
-
+postQuestion _ _ = SAS.throwAll err401
 
 putQuestion :: Key Question -> UpdateQuestionRequest -> App Question
 putQuestion questionId req = do
