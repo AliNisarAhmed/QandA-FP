@@ -54,6 +54,7 @@ currentUserDecoder : Decoder (Maybe CurrentUser)
 currentUserDecoder =
     nullableDecoder
         (Decode.succeed CurrentUser
+            |> required "id" int
             |> required "firstName" string
             |> required "lastName" string
         )

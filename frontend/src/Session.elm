@@ -10,6 +10,7 @@ type alias Session =
 
 
 type alias CurrentUser =
-    { firstName : String
+    { id : Int
+    , firstName : String
     , lastName : String
     }
