@@ -16,7 +16,6 @@ import           Data.Time                      ( UTCTime(..) )
 data CreateQuestionRequest = CreateQuestionRequest
   { title :: Text
   , content :: Text
-  , userId :: Key User
   } deriving (Eq, Show, Generic)
 
 instance FromJSON CreateQuestionRequest

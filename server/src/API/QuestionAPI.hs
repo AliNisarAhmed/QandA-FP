@@ -2,6 +2,7 @@
 {-# LANGUAGE TypeOperators   #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE NamedFieldPuns   #-}
 
 
 module API.QuestionAPI (questionServer, QuestionApi) where
@@ -19,7 +20,7 @@ import Data.Maybe (fromMaybe)
 import API.DbQueries ((!??), getQuestions, insertQuestion, checkQuestion, updateQuestion, deleteQuestionById, getQuestionWithAnswers)
 import API.Requests
 import qualified Servant.Auth.Server as SAS
-import API.AuthAPI (AuthenticatedUser)
+import API.AuthAPI (AuthenticatedUser(..))
 
 type QuestionApi =
     "api" :> "questions" :>
@@ -55,9 +56,9 @@ getQuestion = runDb . getQuestionWithAnswers
 
 
 postQuestion :: SAS.AuthResult AuthenticatedUser -> CreateQuestionRequest -> App (Entity Question)
-postQuestion (SAS.Authenticated user) CreateQuestionRequest {..} = do
+postQuestion (SAS.Authenticated AUser { id }) CreateQuestionRequest {title, content } = do
   now <- liftIO getCurrentTime
-  runDb $ insertQuestion (Question title content now userId)
+  runDb $ insertQuestion (Question title content now id)
 postQuestion _ _ = SAS.throwAll err401
 
 putQuestion :: Key Question -> UpdateQuestionRequest -> App Question
