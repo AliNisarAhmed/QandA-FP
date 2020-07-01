@@ -19,6 +19,10 @@ import Data.Aeson (FromJSON, ToJSON)
 import API.DbQueries ( (!??),
   getAnswersByQuestionId, checkQuestion, createAnswer, checkAnswer, updateAnswer, deleteAnswerFromDb)
 import API.Requests
+import qualified Servant.Auth.Server as SAS
+import API.AuthAPI (AuthenticatedUser(..))
+import Control.Monad (when)
+
 
 type AnswerApi =
   "api" :> "questions" :>
@@ -37,7 +41,8 @@ type AnswerApi =
             :> ReqBody '[JSON] UpdateAnswerRequest
             :> Put '[JSON] Answer
       :<|>
-        Capture "questionId" (Key Question)
+        SAS.Auth '[SAS.Cookie, SAS.JWT] AuthenticatedUser
+            :> Capture "questionId" (Key Question)
             :> "answers"
             :> Capture "answerId" (Key Answer)
             :> Delete '[JSON] ()
@@ -71,9 +76,10 @@ putAnswer questionId answerId req = do
   runDb $ updateAnswer answerId (newContent req)
 
 
-deleteAnswer :: Key Question -> Key Answer -> App ()
-deleteAnswer questionId answerId = do
+deleteAnswer :: SAS.AuthResult AuthenticatedUser -> Key Question -> Key Answer -> App ()
+deleteAnswer (SAS.Authenticated user) questionId answerId = do
   _ <- runDb (checkQuestion questionId) !?? err400 { errBody = "Question not found" }
-  _ <- runDb (checkAnswer questionId answerId) !?? err400 { errBody = "Asnwer not found"}
+  answer <- runDb (checkAnswer questionId answerId) !?? err400 { errBody = "Answer not found"}
+  when (API.AuthAPI.id user /= answerUserId (entityVal answer)) (throwError err401)
   runDb $ deleteAnswerFromDb answerId
-
+deleteAnswer _ _ _ = SAS.throwAll err401
