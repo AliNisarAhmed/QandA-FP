@@ -11,6 +11,7 @@ import           Data.Text                      ( Text(..) )
 import           Model
 import           GHC.Generics                   ( Generic )
 import           Data.Time                      ( UTCTime(..) )
+import           Database.Persist               ( Entity )
 
 
 data CreateQuestionRequest = CreateQuestionRequest
@@ -35,7 +36,7 @@ data QuestionWithAnswers = QuestionWithAnswers
   , content :: Text
   , created :: UTCTime
   , userId :: Key User
-  , answers :: [Answer]
+  , answers :: [Entity Answer]
   } deriving (Eq, Show, Generic)
 
 instance FromJSON QuestionWithAnswers

@@ -121,7 +121,7 @@ getQuestionWithAnswers questionId = do
                                           (questionContent question)
                                           (questionCreated question)
                                           (questionUserId question)
-                                          (fmap entityVal answers)
+                                          answers
 
 
 
