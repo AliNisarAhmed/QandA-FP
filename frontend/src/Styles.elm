@@ -133,6 +133,7 @@ subTextStyles =
     , Font.light
     , Font.color Colors.gray
     , Font.alignLeft
+    , E.width E.fill
     ]
 
 

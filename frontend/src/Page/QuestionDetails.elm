@@ -4,9 +4,11 @@ import Browser.Navigation as Nav
 import Element as E exposing (Element)
 import Element.Input as Input
 import Http
+import Icons
 import Json
     exposing
-        ( AnswerValue
+        ( Answer
+        , AnswerId(..)
         , QuestionId(..)
         , QuestionWithAnswers
         , encodeAnswer
@@ -15,7 +17,7 @@ import Json
 import RemoteData as RemoteData exposing (RemoteData(..), WebData)
 import Session exposing (Session)
 import Styles
-import Utils exposing (displayTime, errorToString)
+import Utils exposing (displayTime, errorToString, hideElement)
 
 
 serverUrl : String
@@ -42,6 +44,8 @@ type Msg
     | OnAnswerChange String
     | SubmitAnswer
     | Submitted (Result Http.Error ())
+    | DeleteAnswer AnswerId
+    | DeleteAnswerResponse (Result Http.Error ())
 
 
 init : Session -> QuestionId -> ( Model, Cmd Msg )
@@ -74,12 +78,38 @@ update msg model =
         Submitted (Ok _) ->
             ( { model | answer = "", question = Loading }, fetchQuestionDetails model.questionId )
 
+        DeleteAnswer answerId ->
+            ( model, deleteAnswer model.questionId answerId )
+
+        DeleteAnswerResponse (Err e) ->
+            ( model, Cmd.none )
+
+        DeleteAnswerResponse (Ok _) ->
+            ( model, fetchQuestionDetails model.questionId )
+
         NoOp _ ->
             ( model, Cmd.none )
 
 
 
 ---- COMMANDS ----
+
+
+deleteAnswer : QuestionId -> AnswerId -> Cmd Msg
+deleteAnswer (QuestionId questionId) (AnswerId answerId) =
+    Http.request
+        { method = "DELETE"
+        , headers = []
+        , url =
+            "/api/questions/"
+                ++ String.fromInt questionId
+                ++ "/answers/"
+                ++ String.fromInt answerId
+        , body = Http.emptyBody
+        , expect = Http.expectWhatever DeleteAnswerResponse
+        , timeout = Nothing
+        , tracker = Nothing
+        }
 
 
 fetchQuestionDetails : QuestionId -> Cmd Msg
@@ -125,8 +155,8 @@ view model =
                                     Styles.contentBoxStyles
                                   <|
                                     [ questionBox question ]
-                                        ++ List.map displayAnswer question.answers
-                                        ++ answerBox
+                                        ++ List.map (displayAnswer model.session) question.answers
+                                        ++ [ hideElement model.session answerBox ]
                                 ]
 
                 Failure err ->
@@ -146,9 +176,9 @@ questionBox q =
         ]
 
 
-answerBox : List (Element Msg)
+answerBox : Element Msg
 answerBox =
-    [ E.column Styles.answerBox
+    E.column Styles.answerBox
         [ Input.multiline
             [ E.height (E.fill |> E.minimum 300 |> E.maximum 600)
             ]
@@ -163,12 +193,19 @@ answerBox =
             , label = E.text "Submit Answer"
             }
         ]
-    ]
 
 
-displayAnswer : AnswerValue -> Element Msg
-displayAnswer answer =
+displayAnswer : Session -> Answer -> Element Msg
+displayAnswer session answer =
     E.column Styles.answerDisplay
-        [ E.row Styles.contentStyles [ E.text answer.content ]
-        , E.row Styles.subTextStyles [ E.text <| "Answered on " ++ displayTime answer.created ]
+        [ E.row Styles.contentStyles
+            [ E.text answer.content
+            ]
+        , E.row Styles.subTextStyles
+            [ E.el [] <| E.text <| "Answered on " ++ displayTime answer.created
+            , Input.button [ E.alignRight ]
+                { onPress = Just (DeleteAnswer answer.id)
+                , label = E.html Icons.trash2 |> hideElement session
+                }
+            ]
         ]

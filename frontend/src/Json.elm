@@ -77,22 +77,13 @@ questionWithAnswersDecoder =
             |> required "content" string
             |> required "created" string
             |> required "userId" userIdDecoder
-            |> required "answers" (list answerValueDecoder)
+            |> required "answers" (list answerDecoder)
         )
 
 
 nullableDecoder : Decoder a -> Decoder (Maybe a)
 nullableDecoder decoder =
     Decode.nullable decoder
-
-
-answerValueDecoder : Decoder AnswerValue
-answerValueDecoder =
-    Decode.succeed AnswerValue
-        |> required "questionId" questionIdDecoder
-        |> required "content" string
-        |> required "created" string
-        |> required "userId" userIdDecoder
 
 
 questionListDecoder : Decoder (List Question)
@@ -174,15 +165,7 @@ type alias QuestionWithAnswers =
     , content : String
     , created : String
     , userId : UserId
-    , answers : List AnswerValue
-    }
-
-
-type alias AnswerValue =
-    { questionId : QuestionId
-    , content : String
-    , created : String
-    , userId : UserId
+    , answers : List Answer
     }
 
 

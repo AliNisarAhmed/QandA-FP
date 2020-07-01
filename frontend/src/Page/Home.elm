@@ -113,7 +113,7 @@ displayQuestion q =
     <|
         E.column [ E.width <| E.px 700 ]
             [ E.link [ Font.bold ] <|
-                { url = "/api/questions/" ++ questionIdToString q.id
+                { url = "/questions/" ++ questionIdToString q.id
                 , label = E.text q.title
                 }
             , E.row [ E.alignLeft ]
