@@ -4,7 +4,7 @@ import DateFormat as DF
 import Element as E exposing (Attribute, Element)
 import Http
 import Iso8601 as Iso
-import Session exposing (Session)
+import Session exposing (Session, UserId(..), getId)
 import Time
 
 
@@ -55,11 +55,25 @@ displayErrorText me =
             E.el [] <| E.text error
 
 
-hideElement : Session -> Element msg -> Element msg
-hideElement s e =
+hideElementForGuest : Session -> Element msg -> Element msg
+hideElementForGuest s e =
     case s.currentUser of
         Nothing ->
             E.none
 
         Just _ ->
             e
+
+
+hideElementForUser : Session -> UserId -> Element msg -> Element msg
+hideElementForUser s (UserId id) element =
+    case s.currentUser of
+        Nothing ->
+            E.none
+
+        Just cu ->
+            if getId cu.id /= id then
+                E.none
+
+            else
+                element

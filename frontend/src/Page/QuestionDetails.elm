@@ -12,12 +12,13 @@ import Json
         , QuestionId(..)
         , QuestionWithAnswers
         , encodeAnswer
+        , getQuestionId
         , questionWithAnswersDecoder
         )
 import RemoteData as RemoteData exposing (RemoteData(..), WebData)
 import Session exposing (Session)
 import Styles
-import Utils exposing (displayTime, errorToString, hideElement)
+import Utils exposing (displayTime, errorToString, hideElementForGuest, hideElementForUser)
 
 
 serverUrl : String
@@ -70,7 +71,7 @@ update msg model =
             ( { model | answer = val }, Cmd.none )
 
         SubmitAnswer ->
-            ( model, submitAnswer model.questionId model.answer )
+            ( model, submitAnswer model )
 
         Submitted (Err e) ->
             ( { model | error = Just <| errorToString e }, Cmd.none )
@@ -120,13 +121,22 @@ fetchQuestionDetails (QuestionId id) =
         }
 
 
-submitAnswer : QuestionId -> String -> Cmd Msg
-submitAnswer (QuestionId id) answer =
-    Http.post
-        { url = serverUrl ++ "/questions/" ++ String.fromInt id ++ "/answers"
-        , body = Http.jsonBody (encodeAnswer answer)
-        , expect = Http.expectWhatever Submitted
-        }
+submitAnswer : Model -> Cmd Msg
+submitAnswer { session, questionId, answer } =
+    case session.currentUser of
+        Nothing ->
+            Cmd.none
+
+        Just cu ->
+            Http.post
+                { url =
+                    serverUrl
+                        ++ "/questions/"
+                        ++ String.fromInt (getQuestionId questionId)
+                        ++ "/answers"
+                , body = Http.jsonBody (encodeAnswer cu.id answer)
+                , expect = Http.expectWhatever Submitted
+                }
 
 
 
@@ -156,7 +166,7 @@ view model =
                                   <|
                                     [ questionBox question ]
                                         ++ List.map (displayAnswer model.session) question.answers
-                                        ++ [ hideElement model.session answerBox ]
+                                        ++ [ hideElementForGuest model.session answerBox ]
                                 ]
 
                 Failure err ->
@@ -205,7 +215,9 @@ displayAnswer session answer =
             [ E.el [] <| E.text <| "Answered on " ++ displayTime answer.created
             , Input.button [ E.alignRight ]
                 { onPress = Just (DeleteAnswer answer.id)
-                , label = E.html Icons.trash2 |> hideElement session
+                , label =
+                    E.html Icons.trash2
+                        |> hideElementForUser session answer.userId
                 }
             ]
         ]

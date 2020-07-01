@@ -3,7 +3,7 @@ module Json exposing (..)
 import Json.Decode as Decode exposing (Decoder, int, list, string)
 import Json.Decode.Pipeline exposing (required)
 import Json.Encode as Encode
-import Session exposing (CurrentUser, Session)
+import Session exposing (CurrentUser, Session, UserId(..), getId)
 
 
 
@@ -29,11 +29,11 @@ encodeSignupForm { userName, firstName, lastName, password, confirmPassword } =
         ]
 
 
-encodeAnswer : String -> Encode.Value
-encodeAnswer str =
+encodeAnswer : UserId -> String -> Encode.Value
+encodeAnswer (UserId id) str =
     Encode.object
         [ ( "content", Encode.string str )
-        , ( "userId", Encode.int 1 )
+        , ( "userId", Encode.int id )
         ]
 
 
@@ -47,11 +47,11 @@ encodeQuestion { content, title, session } =
                 , ( "userId", Encode.null )
                 ]
 
-        Just cu ->
+        Just { id } ->
             Encode.object
                 [ ( "title", Encode.string title )
                 , ( "content", Encode.string content )
-                , ( "userId", Encode.int cu.id )
+                , ( "userId", Encode.int <| getId id )
                 ]
 
 
@@ -63,7 +63,7 @@ currentUserDecoder : Decoder (Maybe CurrentUser)
 currentUserDecoder =
     nullableDecoder
         (Decode.succeed CurrentUser
-            |> required "id" int
+            |> required "id" userIdDecoder
             |> required "firstName" string
             |> required "lastName" string
         )
@@ -137,6 +137,11 @@ type QuestionId
     = QuestionId Int
 
 
+getQuestionId : QuestionId -> Int
+getQuestionId (QuestionId id) =
+    id
+
+
 questionIdToString : QuestionId -> String
 questionIdToString (QuestionId id) =
     String.fromInt id
@@ -144,6 +149,11 @@ questionIdToString (QuestionId id) =
 
 type AnswerId
     = AnswerId Int
+
+
+getAnswerId : AnswerId -> Int
+getAnswerId (AnswerId id) =
+    id
 
 
 answerIdToString : AnswerId -> String
@@ -154,10 +164,6 @@ answerIdToString (AnswerId id) =
 userIdToString : UserId -> String
 userIdToString (UserId id) =
     String.fromInt id
-
-
-type UserId
-    = UserId Int
 
 
 type alias QuestionWithAnswers =

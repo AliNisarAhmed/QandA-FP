@@ -10,7 +10,16 @@ type alias Session =
 
 
 type alias CurrentUser =
-    { id : Int
+    { id : UserId
     , firstName : String
     , lastName : String
     }
+
+
+type UserId
+    = UserId Int
+
+
+getId : UserId -> Int
+getId (UserId id) =
+    id

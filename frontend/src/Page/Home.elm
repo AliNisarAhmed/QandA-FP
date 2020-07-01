@@ -12,7 +12,7 @@ import RemoteData exposing (RemoteData(..), WebData)
 import Route
 import Session exposing (Session)
 import Styles exposing (buttonStyles)
-import Utils exposing (displayTime, errorToString, hideElement)
+import Utils exposing (displayTime, errorToString, hideElementForGuest)
 
 
 explain =
@@ -77,7 +77,7 @@ page questions session =
                 [ E.column [ E.centerX, E.paddingXY 0 20, E.height E.fill ] <|
                     [ E.el [] <| E.text "No Questions asked so far..."
                     , E.el [ E.height E.fill, E.centerY ] <|
-                        hideElement session <|
+                        hideElementForGuest session <|
                             askQuestionButton [ E.centerY ]
                     ]
                 ]
@@ -87,7 +87,7 @@ page questions session =
                 [ E.column [ E.centerX, E.paddingXY 0 20 ] <|
                     [ E.row [ E.width E.fill ]
                         [ E.el [ Font.bold ] <| E.text "Unanswered Questions"
-                        , hideElement session <| askQuestionButton [ E.alignRight ]
+                        , hideElementForGuest session <| askQuestionButton [ E.alignRight ]
                         ]
                     ]
                         ++ List.map displayQuestion questions
