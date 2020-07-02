@@ -211,11 +211,16 @@ displayAnswer session answer =
         [ E.paragraph Styles.contentStyles [ E.text answer.content ]
         , E.row Styles.subTextStyles
             [ E.el [] <| E.text <| "Answered on " ++ displayTime answer.created
-            , Input.button [ E.alignRight ]
-                { onPress = Just (DeleteAnswer answer.id)
-                , label =
-                    E.html Icons.trash2
-                        |> hideElementForUser session answer.userId
-                }
+            , deleteIcon session answer
             ]
         ]
+
+
+deleteIcon : Session -> Answer -> Element Msg
+deleteIcon session answer =
+    Input.button [ E.alignRight ]
+        { onPress = Just (DeleteAnswer answer.id)
+        , label =
+            E.html Icons.trash2
+                |> hideElementForUser session answer.userId
+        }

@@ -7,12 +7,13 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Http
-import Json exposing (Question, questionIdToString, questionListDecoder)
+import Icons
+import Json exposing (Question, QuestionId(..), questionIdToString, questionListDecoder)
 import RemoteData exposing (RemoteData(..), WebData)
 import Route
 import Session exposing (Session)
 import Styles exposing (buttonStyles)
-import Utils exposing (displayTime, errorToString, hideElementForGuest)
+import Utils exposing (displayTime, errorToString, hideElementForGuest, hideElementForUser)
 
 
 explain =
@@ -28,6 +29,8 @@ type alias Model =
 type Msg
     = GotQuestions (WebData (List Question))
     | GoToAskAQuestionPage
+    | DeleteQuestion QuestionId
+    | DeleteQuestionResponse (Result Http.Error ())
 
 
 init : Session -> ( Model, Cmd Msg )
@@ -51,6 +54,34 @@ update msg model =
 
         GoToAskAQuestionPage ->
             ( model, Route.pushUrl Route.AskQuestionRoute model.session.key )
+
+        DeleteQuestion questionId ->
+            ( model, deleteQuestion model questionId )
+
+        DeleteQuestionResponse (Err e) ->
+            ( model, Cmd.none )
+
+        DeleteQuestionResponse (Ok _) ->
+            ( model, Cmd.none )
+
+
+
+---- COMMANDS ----
+
+
+deleteQuestion : Model -> QuestionId -> Cmd Msg
+deleteQuestion model (QuestionId questionId) =
+    Http.request
+        { method = "DELETE"
+        , headers = []
+        , url =
+            "/api/questions/"
+                ++ String.fromInt questionId
+        , body = Http.emptyBody
+        , expect = Http.expectWhatever DeleteQuestionResponse
+        , timeout = Nothing
+        , tracker = Nothing
+        }
 
 
 view : Model -> Element Msg
@@ -90,7 +121,7 @@ page questions session =
                         , hideElementForGuest session <| askQuestionButton [ E.alignRight ]
                         ]
                     ]
-                        ++ List.map displayQuestion questions
+                        ++ List.map (displayQuestion session) questions
                 ]
 
 
@@ -103,8 +134,8 @@ askQuestionButton styles =
         { onPress = Just GoToAskAQuestionPage, label = E.text "Ask a question" }
 
 
-displayQuestion : Question -> Element Msg
-displayQuestion q =
+displayQuestion : Session -> Question -> Element Msg
+displayQuestion session q =
     E.el
         [ Border.widthEach { bottom = 1, top = 0, right = 0, left = 0 }
         , Border.color Colors.gray
@@ -122,4 +153,15 @@ displayQuestion q =
                 ]
             , E.row Styles.subTextStyles
                 [ E.text <| "Asked on " ++ displayTime q.created ]
+            , deleteIcon session q
             ]
+
+
+deleteIcon : Session -> Question -> Element Msg
+deleteIcon session question =
+    Input.button [ E.alignRight ]
+        { onPress = Just (DeleteQuestion question.id)
+        , label =
+            E.html Icons.trash2
+                |> hideElementForUser session question.userId
+        }
